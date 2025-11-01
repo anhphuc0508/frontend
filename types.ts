@@ -34,7 +34,7 @@ export interface Product {
   sku?: string;
   subCategory?: string;
   sold: number;
-  total: number;
+  stock_quantity: number;
 }
 // --- SỬA LỖI LOGIC Ở ĐÂY ---
 // CartItem không nên kế thừa (extends) Product.

@@ -414,7 +414,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
       rating: 0,
       reviews: 0,
       sold: 0,
-      total: formData.stock,
+      stock_quantity: formData.stock,
       variants: []
     };
     onAddProduct(newProduct);
