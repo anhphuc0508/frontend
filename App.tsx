@@ -99,7 +99,7 @@ const mapProductResponseToProduct = (res: any): Product => {
     oldPrice: firstVariant?.oldPrice || undefined,
     sku: firstVariant?.sku || 'N/A',
     inStock: (firstVariant?.stockQuantity || 0) > 0,
-    stock_quantity: firstVariant?.stockQuantity || 0,
+    stockQuantity: firstVariant?.stockQuantity || 0,
     images: [`https://picsum.photos/seed/product${res.productId}/400/400`],
     rating: 0,
     reviews: 0,

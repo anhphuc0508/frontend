@@ -383,7 +383,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                         value={variant.stockQuantity}
                         onChange={e => handleVariantChange(index, 'stockQuantity', e.target.value)}
                         className={smallInputStyles}
-                        placeholder="120"
+                        placeholder="0"
                         required
                       />
                     </div>

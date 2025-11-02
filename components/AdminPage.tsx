@@ -226,7 +226,7 @@ const ProductManagementView: React.FC<{
                         const productVariants = product.variants || []; 
                         
                         // Tính toán lại dựa trên tất cả biến thể
-                        const totalStock = productVariants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0);
+                        const totalStock = productVariants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0);
                         const inStock = totalStock > 0;
 
                         return (
@@ -290,7 +290,7 @@ const ProductManagementView: React.FC<{
                                             <td className="px-4 py-3">
                                               {variant.oldPrice ? `${variant.oldPrice.toLocaleString('vi-VN')}₫` : 'N/A'}
                                             </td>
-                                            <td className="px-4 py-3">{variant.stock_quantity}</td>
+                                            <td className="px-4 py-3">{variant.stockQuantity}</td>
                                           </tr>
                                         ))}
                                         {productVariants.length === 0 && (

@@ -109,7 +109,7 @@ export const SORT_OPTIONS: SortOption[] = [
 ];
 
 // --- DỮ LIỆU SẢN PHẨM VỚI 'VARIANTS' ---
-// (Đây là code tôi đã sửa lỗi 'sold' và 'stock_quantity' trước đó)
+// (Đây là code tôi đã sửa lỗi 'sold' và 'stockQuantity' trước đó)
 export const allProducts: Product[] = [
     {
       id: 1,
@@ -127,7 +127,7 @@ export const allProducts: Product[] = [
       flavors: ['Double Rich Chocolate', 'Vanilla Ice Cream', 'Mocha Cappuccino'],
       sizes: ['5Lbs', '10Lbs'],
       sold: 1250, 
-      stock_quantity: 100,
+      stockQuantity: 100,
       variants: [
         {
           variantId: 101, name: 'Double Rich Chocolate 5Lbs',
@@ -186,7 +186,7 @@ export const allProducts: Product[] = [
       flavors: ['Chocolate Brownie', 'Salted Caramel', 'Unflavored'],
       sizes: ['5.5Lbs'],
       sold: 850,
-      stock_quantity: 100,
+      stockQuantity: 100,
       variants: [
         {
           variantId: 301, name: 'Chocolate Brownie 5.5Lbs',
@@ -223,7 +223,7 @@ export const allProducts: Product[] = [
       flavors: ['Icy Blue Razz', 'Fruit Punch', 'Watermelon'],
       sizes: ['60 Servings'], 
       sold: 3200,
-      stock_quantity: 100,
+      stockQuantity: 100,
       variants: [
         {
           variantId: 701, name: 'Icy Blue Razz 60 Servings',
@@ -260,7 +260,7 @@ export const allProducts: Product[] = [
         flavors: ['Chocolate', 'Vanilla', 'Banana'],
         sizes: ['12Lbs'],
         sold: 2100,
-        stock_quantity: 100,
+        stockQuantity: 100,
         variants: [
           {
             variantId: 501, name: 'Chocolate 12Lbs',
