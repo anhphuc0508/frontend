@@ -1,3 +1,4 @@
+// File: types.ts (Đã cập nhật ProductVariantRequest)
 // FIX: Removed self-referential import of Product type.
 
 export interface ProductVariant {
@@ -129,12 +130,16 @@ export interface UserResponse {
   phoneNumber: string;
   role: string; // (Backend trả về string "USER" hoặc "ADMIN")
 }
+
+// === SỬA ĐỔI Ở ĐÂY ===
 export interface ProductVariantRequest {
   name: string;
   sku: string;
   price: number; // (Frontend dùng number, backend Java dùng BigDecimal)
   salePrice?: number;
   stockQuantity: number;
+  flavor: string; // Bắt buộc admin nhập
+  size: string;   // Bắt buộc admin nhập
 }
 
 // 2. THÊM TYPE NÀY (Khớp với CreateProductRequest.java )

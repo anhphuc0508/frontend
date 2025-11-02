@@ -1,4 +1,4 @@
-// src/components/admin/AddProductModal.tsx
+// src/components/admin/AddProductModal.tsx (Đã sửa)
 import React, { useState, useEffect } from 'react';
 import { Product, CreateProductRequest, ProductVariantRequest } from '../types';
 
@@ -10,10 +10,13 @@ interface AddProductModalProps {
   productToEdit: Product | null;
 }
 
-type VariantFormState = Omit<ProductVariantRequest, 'price' | 'stockQuantity' | 'salePrice'> & {
+// === SỬA ĐỔI 1: Thêm flavor và size vào state của form ===
+type VariantFormState = Omit<ProductVariantRequest, 'price' | 'stockQuantity' | 'salePrice' | 'flavor' | 'size'> & {
   price: string;
   stockQuantity: string;
   salePrice: string;
+  flavor: string;
+  size: string;
 };
 
 const AddProductModal: React.FC<AddProductModalProps> = ({
@@ -37,12 +40,10 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   const smallInputStyles =
     "w-full px-2 py-1.5 text-sm bg-[var(--admin-bg-card)] border border-[var(--admin-border-color)] rounded-md text-[var(--admin-text-main)] placeholder-[var(--admin-text-secondary)] focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)]";
 
+  // === SỬA ĐỔI 2: Cập nhật state khi mở modal ===
   useEffect(() => {
     if (isOpen) {
-      console.log('productToEdit:', productToEdit);
-
       if (isEditMode && productToEdit) {
-        // CHẾ ĐỘ CHỈNH SỬA
         setName(productToEdit.name);
         setDescription(productToEdit.description || '');
         setCategoryId(productToEdit.categoryId || 0);
@@ -54,30 +55,30 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
           price: String(v.price),
           salePrice: String(v.oldPrice || ''),
           stockQuantity: String(v.stock_quantity),
+          flavor: v.flavor || '', // Lấy data
+          size: v.size || '',     // Lấy data
         }));
-
         setVariantsState(variantsFromProduct);
       } else {
-        // CHẾ ĐỘ THÊM MỚI
-        console.log('RESET FORM THÊM MỚI');
+        // Reset
         setName('');
         setDescription('');
         setCategoryId(0);
         setBrandId(0);
         setVariantsState([
-          { name: '', sku: '', price: '', stockQuantity: '', salePrice: '' },
+          { name: '', sku: '', price: '', stockQuantity: '', salePrice: '', flavor: '', size: '' },
         ]);
       }
       setError('');
     }
-  }, [isOpen, productToEdit]);
+  }, [isOpen, productToEdit, isEditMode]);
 
   if (!isOpen) return null;
 
   const handleAddVariantRow = () => {
     setVariantsState([
       ...variantsState,
-      { name: '', sku: '', price: '', stockQuantity: '', salePrice: '' },
+      { name: '', sku: '', price: '', stockQuantity: '', salePrice: '', flavor: '', size: '' },
     ]);
   };
 
@@ -99,6 +100,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
     setVariantsState(newVariants);
   };
 
+  // === SỬA ĐỔI 3: Gửi đi flavor và size ===
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -117,31 +119,23 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
         price: v.price.trim(),
         stockQuantity: v.stockQuantity.trim(),
         salePrice: v.salePrice.trim(),
+        flavor: v.flavor.trim(), // Lấy data
+        size: v.size.trim(),     // Lấy data
       };
 
-      if (!t.name) {
-        errorMessage = 'Tên biến thể bắt buộc';
-        break;
-      }
-      if (!t.sku) {
-        errorMessage = 'SKU bắt buộc';
-        break;
-      }
-      if (!t.price || isNaN(Number(t.price))) {
-        errorMessage = 'Giá không hợp lệ';
-        break;
-      }
-      if (Number(t.price) <= 0) {
-        errorMessage = 'Giá phải > 0';
-        break;
+      if (!t.name) { errorMessage = 'Tên biến thể bắt buộc'; break; }
+      if (!t.sku) { errorMessage = 'SKU bắt buộc'; break; }
+      if (!t.flavor) { errorMessage = 'Hương vị là bắt buộc'; break; } // Bắt buộc
+      if (!t.size) { errorMessage = 'Kích cỡ là bắt buộc'; break; }   // Bắt buộc
+      
+      if (!t.price || isNaN(Number(t.price)) || Number(t.price) <= 0) {
+        errorMessage = 'Giá không hợp lệ'; break;
       }
       if (!t.stockQuantity || isNaN(Number(t.stockQuantity))) {
-        errorMessage = 'Tồn kho không hợp lệ';
-        break;
+        errorMessage = 'Tồn kho không hợp lệ'; break;
       }
       if (t.salePrice && isNaN(Number(t.salePrice))) {
-        errorMessage = 'Giá KM không hợp lệ';
-        break;
+        errorMessage = 'Giá KM không hợp lệ'; break;
       }
 
       finalVariants.push({
@@ -150,6 +144,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
         price: Number(t.price),
         salePrice: t.salePrice ? Number(t.salePrice) : undefined,
         stockQuantity: Number(t.stockQuantity),
+        flavor: t.flavor, // Gửi đi
+        size: t.size,     // Gửi đi
       });
     }
 
@@ -157,7 +153,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
       setError(errorMessage);
       return;
     }
-
     if (finalVariants.length === 0) {
       setError('Phải có ít nhất 1 biến thể');
       return;
@@ -165,7 +160,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
 
     const payload: CreateProductRequest = {
       name: name.trim(),
-      description: description.trim() || null,
+      description: description.trim() || '', // Gửi '' thay vì null
       categoryId: categoryId,
       brandId: brandId,
       variants: finalVariants,
@@ -200,7 +195,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
         >
           {/* Thông tin chung */}
           <section className="space-y-4">
-            <div>
+            {/* ... (Tên sản phẩm, Danh mục, Thương hiệu, Mô tả - giữ nguyên) ... */}
+             <div>
               <label className="block text-sm font-medium text-[var(--admin-text-secondary)] mb-1">
                 Tên sản phẩm (Chung)
               </label>
@@ -291,6 +287,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                     )}
                   </div>
 
+                  {/* === SỬA ĐỔI 4: Thêm 2 trường vào JSX === */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-[var(--admin-text-secondary)] mb-1">
@@ -299,30 +296,57 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                       <input
                         type="text"
                         value={variant.name}
-                        onChange={e =>
-                          handleVariantChange(index, 'name', e.target.value)
-                        }
+                        onChange={e => handleVariantChange(index, 'name', e.target.value)}
                         className={smallInputStyles}
                         placeholder="ví dụ: Vị Chocolate 1kg"
                         required
                       />
                     </div>
-                    <div>
+                     <div>
                       <label className="block text-xs font-medium text-[var(--admin-text-secondary)] mb-1">
                         SKU
                       </label>
                       <input
                         type="text"
                         value={variant.sku}
-                        onChange={e =>
-                          handleVariantChange(index, 'sku', e.target.value)
-                        }
+                        onChange={e => handleVariantChange(index, 'sku', e.target.value)}
                         className={smallInputStyles}
                         placeholder="ví dụ: MP-WHEY-CHOC-1KG"
                         required
                       />
                     </div>
                   </div>
+                  
+                  {/* Dàn layout mới cho 2 trường bắt buộc */}
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                     <div>
+                        <label className="block text-xs font-medium text-[var(--admin-text-secondary)] mb-1">
+                          Hương vị (Dùng để lọc)
+                        </label>
+                        <input
+                          type="text"
+                          value={variant.flavor}
+                          onChange={e => handleVariantChange(index, 'flavor', e.target.value)}
+                          className={smallInputStyles}
+                          placeholder="ví dụ: Chocolate"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--admin-text-secondary)] mb-1">
+                          Kích cỡ (Dùng để lọc)
+                        </label>
+                        <input
+                          type="text"
+                          value={variant.size}
+                          onChange={e => handleVariantChange(index, 'size', e.target.value)}
+                          className={smallInputStyles}
+                          placeholder="ví dụ: 5Lbs"
+                          required
+                        />
+                      </div>
+                  </div>
+
 
                   <div className="grid grid-cols-3 gap-3">
                     <div>
@@ -332,9 +356,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                       <input
                         type="text"
                         value={variant.price}
-                        onChange={e =>
-                          handleVariantChange(index, 'price', e.target.value)
-                        }
+                        onChange={e => handleVariantChange(index, 'price', e.target.value)}
                         className={smallInputStyles}
                         placeholder="650000"
                         required
@@ -347,9 +369,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                       <input
                         type="text"
                         value={variant.salePrice}
-                        onChange={e =>
-                          handleVariantChange(index, 'salePrice', e.target.value)
-                        }
+                        onChange={e => handleVariantChange(index, 'salePrice', e.target.value)}
                         className={smallInputStyles}
                         placeholder="600000"
                       />
@@ -361,9 +381,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                       <input
                         type="text"
                         value={variant.stockQuantity}
-                        onChange={e =>
-                          handleVariantChange(index, 'stockQuantity', e.target.value)
-                        }
+                        onChange={e => handleVariantChange(index, 'stockQuantity', e.target.value)}
                         className={smallInputStyles}
                         placeholder="120"
                         required
@@ -372,8 +390,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                   </div>
                 </div>
               ))}
-
-              <button
+              {/* ... (Nút + Thêm biến thể) ... */}
+                <button
                 type="button"
                 onClick={handleAddVariantRow}
                 className="w-full text-sm font-bold text-[var(--admin-text-accent)] border-2 border-dashed border-[var(--admin-border-color)] rounded-lg py-2.5 hover:bg-[var(--admin-bg-hover)] transition-colors"

@@ -1,4 +1,4 @@
-// File: App.tsx (Đã sửa dứt điểm tất cả lỗi)
+// File: App.tsx (Sửa logic map data)
 import React, { useState, useCallback, useEffect } from 'react';
 import api from './lib/axios'; // Đảm bảo import từ file mới
 import { CartProvider } from './contexts/CartContext';
@@ -19,45 +19,97 @@ import AdminPage from './components/AdminPage';
 import AccountPage from './components/AccountPage';
 import OrderHistoryPage from './components/OrderHistoryPage';
 
-// 1. HÀM MAP (BÊN NGOÀI COMPONENT APP) - ĐÃ SỬA LỖI TERNARY VÀ ÉP KIỂU
+
+// === BƯỚC 1: THÊM HÀM PARSE NÀY (BÊN NGOÀI COMPONENT APP) ===
+/**
+ * Tự động bóc tách flavor/size từ variant.name.
+ * Không cần database, chỉ đọc text.
+ * Ví dụ: "Vị Chocolate 1kg" -> { flavor: "Chocolate", size: "1kg" }
+ * Ví dụ: "Icy Blue Razz 60 Servings" -> { flavor: "Icy Blue Razz", size: "60 Servings" }
+ */
+const parseVariantName = (name: string): { flavor: string, size: string } => {
+    // Tìm size (ví dụ: 5Lbs, 1kg, 60 Servings, 30 servings)
+    // Regex này tìm số, có thể có dấu chấm, theo sau là "Lbs", "kg", hoặc "Servings"
+    const sizeRegex = /(\d+(\.\d+)?\s*(Lbs|kg|Servings))/i;
+    const sizeMatch = name.match(sizeRegex);
+    
+    let size = "Standard"; // Mặc định nếu không tìm thấy
+    let flavor = name; // Mặc định là cả tên
+
+    if (sizeMatch && sizeMatch[0]) {
+        size = sizeMatch[0].replace(/\s+/g, ''); // Lấy size, ví dụ: "1kg" hoặc "60Servings"
+        
+        // Flavor là phần tên còn lại, bỏ chữ "Vị" (nếu có)
+        flavor = name.replace(sizeRegex, '') // Bỏ phần size
+                     .replace(/^Vị\s+/i, '') // Bỏ chữ "Vị " ở đầu
+                     .trim(); // Làm sạch
+    } else {
+         // Nếu không có size, thì chỉ cần bỏ chữ "Vị"
+         flavor = name.replace(/^Vị\s+/i, '').trim();
+    }
+
+    // Đảm bảo không rỗng
+    return { 
+        flavor: flavor || 'Default Flavor', 
+        size: size 
+    };
+};
+
+
+// === BƯỚC 2: SỬA HÀM MAP NÀY ===
 const mapProductResponseToProduct = (res: any): Product => {
-  const firstVariant = res.variants?.[0];
+  // 1. Map qua các variants VÀ thêm 'flavor', 'size' đã phân tích
+  const mappedVariants = (res.variants || []).map((v: any) => {
+      // Dùng hàm parse mới
+      const { flavor: parsedFlavor, size: parsedSize } = parseVariantName(v.name);
+      
+      // Ghi đè/Thêm 2 trường 'flavor' và 'size' vào mỗi variant
+      return {
+          ...v,
+          flavor: parsedFlavor, 
+          size: parsedSize,     
+      };
+  });
+
+  // 2. Tạo allFlavors và allSizes TỪ 'mappedVariants' MỚI (đã có data)
+  const allFlavors: string[] = mappedVariants.length > 0
+    ? [...new Set<string>(mappedVariants.map((v: any) => v.flavor as string).filter(Boolean))]
+    : [];
+
+  const allSizes: string[] = mappedVariants.length > 0
+    ? [...new Set<string>(mappedVariants.map((v: any) => v.size as string).filter(Boolean))]
+    : [];
   
-  // === SỬA LỖI Ở ĐÂY ===
-  // Bổ sung ? (nếu có res.variants) và : [] (nếu không có) VÀ ép kiểu (as string)
-  const allFlavors: string[] = res.variants 
-  ? [...new Set<string>(res.variants.map((v: any) => v.flavor as string).filter(Boolean))] 
-  : [];
-
-const allSizes: string[] = res.variants 
-  ? [...new Set<string>(res.variants.map((v: any) => v.size as string).filter(Boolean))] 
-  : [];
-
-  const categoryId = res.category?.categoryId || 0; 
+  // 3. Lấy firstVariant từ list MỚI
+  const firstVariant = mappedVariants.length > 0 ? mappedVariants[0] : null;
+  const categoryId = res.category?.categoryId || 0;
   const brandId = res.brand?.brandId || 0;
 
   return {
     id: res.productId,
     name: res.name,
     description: res.description,
-    category: res.categoryName, 
+    category: res.categoryName,
     brand: res.brandName,
-    variants: res.variants || [],
+    
+    // DÙNG LIST MỚI (ĐÃ CÓ FLAVOR/SIZE)
+    variants: mappedVariants, 
+    
     price: firstVariant?.price || 0,
     oldPrice: firstVariant?.oldPrice || undefined,
     sku: firstVariant?.sku || 'N/A',
     inStock: (firstVariant?.stockQuantity || 0) > 0,
     stock_quantity: firstVariant?.stockQuantity || 0,
     images: [`https://picsum.photos/seed/product${res.productId}/400/400`],
-    rating: 0, 
+    rating: 0,
     reviews: 0,
     sold: 0,
     
-    // Thêm lại 2 dòng này
-    flavors: allFlavors,
-    sizes: allSizes,
+    // DÙNG LIST MỚI
+    flavors: allFlavors, 
+    sizes: allSizes,     
 
-    categoryId: categoryId, // Dùng để sửa (number)
+    categoryId: categoryId,
     brandId: brandId,
   };
 };
@@ -157,6 +209,7 @@ const App: React.FC = () => {
       const res = await api.get('/products');
       console.log("Đã tải lại products:", res.data);
       
+      // DÙNG HÀM MAP ĐÃ SỬA
       const mappedProducts = res.data.map(mapProductResponseToProduct);
       setProducts(mappedProducts); // Bỏ comment dòng này
 
