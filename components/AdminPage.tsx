@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { User, Theme, Product, Order, OrderStatus } from '../types';
+import { User, Theme, Product, Order, OrderStatus, CreateProductRequest } from '../types';
 import AddProductModal from './AddProductModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
@@ -55,6 +55,13 @@ const HomeIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) =
     </svg>
 );
 
+// THÊM ICON NÀY
+const ChevronDownIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+    </svg>
+);
+
 
 const navItems = [
   { name: 'Bảng điều khiển', icon: DashboardIcon },
@@ -65,24 +72,13 @@ const navItems = [
   { name: 'Trang Chủ', icon: HomeIcon },
 ];
 
-export interface ProductFormData {
-    sku: string;
-    name: string;
-    price: number;
-    stock: number;
-    image: string;
-    category: string;
-    description: string;
-    subCategory?: string;
-}
-
 interface AdminPageProps {
   currentUser: User;
   onLogout: () => void;
   onViewSite: () => void;
   products: Product[];
-  onAddProduct: (product: Product) => void;
-  onUpdateProduct: (product: Product) => void;
+  onAddProduct: (request: CreateProductRequest) => void;
+  onUpdateProduct: (productId: number, request: CreateProductRequest) => void;
   onDeleteProduct: (productId: number) => void;
   orders: Order[];
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
@@ -140,6 +136,7 @@ const DashboardView: React.FC<{products: Product[]}> = ({products}) => (
     </>
 );
 
+// THAY THẾ TOÀN BỘ 'ProductManagementView' NÀY
 const ProductManagementView: React.FC<{
     products: Product[];
     onEdit: (product: Product) => void;
@@ -148,6 +145,9 @@ const ProductManagementView: React.FC<{
 }> = ({ products, onEdit, onDelete, onAddNew }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('Tất cả');
+    
+    // State để theo dõi sản phẩm nào đang được mở
+    const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
 
     const categories = ['Tất cả', ...Array.from(new Set(products.map(p => p.category)))];
 
@@ -160,6 +160,11 @@ const ProductManagementView: React.FC<{
     }, [products, searchTerm, categoryFilter]);
     
     const inputStyles = "bg-[var(--admin-bg-card)] border border-[var(--admin-border-color)] rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 ring-[var(--admin-text-accent)]";
+
+    // Hàm để toggle mở/đóng
+    const handleToggleExpand = (productId: number) => {
+        setExpandedProductId(prevId => (prevId === productId ? null : productId));
+    };
 
     return (
         <>
@@ -200,39 +205,110 @@ const ProductManagementView: React.FC<{
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
+                    {/* Sửa lại các cột của bảng chính */}
                     <thead className="text-xs text-[var(--admin-text-secondary)] uppercase border-b border-[var(--admin-border-color)]">
                       <tr>
+                        <th scope="col" className="px-2 py-3 w-12"></th> {/* Cột cho nút expand */}
                         <th scope="col" className="px-6 py-3">Tên sản phẩm</th>
-                        <th scope="col" className="px-6 py-3">SKU</th>
                         <th scope="col" className="px-6 py-3">Danh mục</th>
-                        <th scope="col" className="px-6 py-3">Giá</th>
-                        <th scope="col" className="px-6 py-3">Tồn kho</th>
+                        <th scope="col" className="px-6 py-3">Thương hiệu</th>
+                        <th scope="col" className="px-6 py-3">Tổng tồn kho</th>
                         <th scope="col" className="px-6 py-3">Trạng thái</th>
                         <th scope="col" className="px-6 py-3">Hành động</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredProducts.map((product) => (
-                        <tr key={product.id} className="border-b border-[var(--admin-border-color)] hover:bg-[var(--admin-bg-hover)]">
-                          <td className="px-6 py-4 font-medium flex items-center space-x-3">
-                            <img src={product.images[0]} alt={product.name} className="w-10 h-10 rounded-md object-cover"/>
-                            <span>{product.name}</span>
-                          </td>
-                          <td className="px-6 py-4 font-mono">{product.sku}</td>
-                          <td className="px-6 py-4">{product.category}</td>
-                          <td className="px-6 py-4">{product.price.toLocaleString('vi-VN')}₫</td>
-                          <td className="px-6 py-4">{product.total || 0}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${product.inStock ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                                {product.inStock ? 'Còn hàng' : 'Hết hàng'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 flex items-center space-x-3">
-                            <button onClick={() => onEdit(product)} className="font-medium text-[var(--admin-text-accent)] hover:underline">Sửa</button>
-                            <button onClick={() => onDelete(product)} className="font-medium text-red-500 hover:underline">Xóa</button>
-                          </td>
-                        </tr>
-                      ))}
+                      {/* Dùng React.Fragment để render 2 hàng cho mỗi sản phẩm */}
+                      {filteredProducts.map((product) => {
+                        const isExpanded = expandedProductId === product.id;
+                        
+                        // Lấy data từ variants (vì 'product' được map từ 'mapProductResponseToProduct')
+                        const productVariants = product.variants || []; 
+                        
+                        // Tính toán lại dựa trên tất cả biến thể
+                        const totalStock = productVariants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0);
+                        const inStock = totalStock > 0;
+
+                        return (
+                          <React.Fragment key={product.id}>
+                            {/* === HÀNG 1: SẢN PHẨM CHÍNH === */}
+                            <tr className="border-b border-[var(--admin-border-color)] hover:bg-[var(--admin-bg-hover)]">
+                              
+                              {/* Nút Expand */}
+                              <td className="px-2 py-4 text-center">
+                                <button 
+                                  onClick={() => handleToggleExpand(product.id)} 
+                                  className="text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-main)] transition-colors"
+                                  disabled={productVariants.length === 0}
+                                  title={productVariants.length === 0 ? "Không có biến thể" : "Xem biến thể"}
+                                >
+                                  <ChevronDownIcon className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''} ${productVariants.length === 0 ? 'opacity-30' : ''}`} />
+                                </button>
+                              </td>
+                              
+                              {/* Thông tin sản phẩm */}
+                              <td className="px-6 py-4 font-medium flex items-center space-x-3">
+                                <img src={product.images[0]} alt={product.name} className="w-10 h-10 rounded-md object-cover"/>
+                                <span>{product.name}</span>
+                              </td>
+                              <td className="px-6 py-4">{product.category}</td>
+                              <td className="px-6 py-4">{product.brand}</td>
+                              <td className="px-6 py-4">{totalStock}</td>
+                              <td className="px-6 py-4">
+                                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${inStock ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                    {inStock ? 'Còn hàng' : 'Hết hàng'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 flex items-center space-x-3">
+                                <button onClick={() => onEdit(product)} className="font-medium text-[var(--admin-text-accent)] hover:underline">Sửa</button>
+                                <button onClick={() => onDelete(product)} className="font-medium text-red-500 hover:underline">Xóa</button>
+                              </td>
+                            </tr>
+                            
+                            {/* === HÀNG 2: CHI TIẾT BIẾN THỂ (ẨN/HIỆN) === */}
+                            {isExpanded && (
+                              <tr className="bg-[var(--admin-bg-hover)]">
+                                <td colSpan={7} className="py-4 px-6 md:px-10 lg:px-16">
+                                  <h4 className="text-sm font-bold text-[var(--admin-text-main)] mb-2 ml-1">Các biến thể</h4>
+                                  <div className="border border-[var(--admin-border-color)] rounded-lg overflow-hidden">
+                                    <table className="w-full text-sm">
+                                      <thead className="bg-[var(--admin-bg-card)] text-xs text-[var(--admin-text-secondary)] uppercase">
+                                        <tr>
+                                          <th className="px-4 py-2 text-left">Tên biến thể</th>
+                                          <th className="px-4 py-2 text-left">SKU</th>
+                                          <th className="px-4 py-2 text-left">Giá</th>
+                                          <th className="px-4 py-2 text-left">Giá KM</th>
+                                          <th className="px-4 py-2 text-left">Tồn kho</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="bg-[var(--admin-bg-card)]">
+                                        {productVariants.map((variant) => (
+                                          <tr key={variant.sku} className="border-t border-[var(--admin-border-color)]">
+                                            <td className="px-4 py-3">{variant.name}</td>
+                                            <td className="px-4 py-3 font-mono">{variant.sku}</td>
+                                            <td className="px-4 py-3">{variant.price.toLocaleString('vi-VN')}₫</td>
+                                            <td className="px-4 py-3">
+                                              {variant.oldPrice ? `${variant.oldPrice.toLocaleString('vi-VN')}₫` : 'N/A'}
+                                            </td>
+                                            <td className="px-4 py-3">{variant.stock_quantity}</td>
+                                          </tr>
+                                        ))}
+                                        {productVariants.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="text-center py-4 text-[var(--admin-text-secondary)]">
+                                                    Sản phẩm này chưa có biến thể nào. (Vui lòng bấm "Sửa" để thêm)
+                                                </td>
+                                            </tr>
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -399,28 +475,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
     setProductToEdit(null);
   };
 
-  const handleAddProduct = (formData: ProductFormData) => {
-    const newProduct: Product = {
-      id: Date.now(),
-      sku: formData.sku,
-      name: formData.name,
-      images: [formData.image],
-      price: formData.price,
-      category: formData.category,
-      subCategory: formData.subCategory,
-      brand: 'GymSup', // Default brand
-      inStock: formData.stock > 0,
-      description: formData.description,
-      rating: 0,
-      reviews: 0,
-      sold: 0,
-      stock_quantity: formData.stock,
-      variants: []
-    };
-    onAddProduct(newProduct);
-    handleCloseModal();
-  };
-  
   const handleAddNewClick = () => {
     setProductToEdit(null);
     setIsModalOpen(true);
@@ -429,26 +483,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
   const handleEditClick = (product: Product) => {
     setProductToEdit(product);
     setIsModalOpen(true);
-  };
-  
-  const handleUpdateProduct = (formData: ProductFormData) => {
-    if (!productToEdit) return;
-
-    const updatedProduct: Product = {
-      ...productToEdit,
-      sku: formData.sku,
-      name: formData.name,
-      price: formData.price,
-      total: formData.stock,
-      inStock: formData.stock > 0,
-      images: [formData.image],
-      category: formData.category,
-      subCategory: formData.subCategory,
-      description: formData.description,
-    };
-
-    onUpdateProduct(updatedProduct);
-    handleCloseModal();
   };
 
   const handleDeleteClick = (product: Product) => {
@@ -570,8 +604,8 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
       <AddProductModal 
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        onAddProduct={handleAddProduct}
-        onUpdateProduct={handleUpdateProduct}
+        onAddProduct={onAddProduct}
+        onUpdateProduct={onUpdateProduct}
         productToEdit={productToEdit}
       />
       <DeleteConfirmationModal 

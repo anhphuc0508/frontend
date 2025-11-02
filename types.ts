@@ -37,6 +37,7 @@ export interface Product {
   stock_quantity: number;
   categoryId?: number;
   brandId?: number;
+  
 }
 // --- SỬA LỖI LOGIC Ở ĐÂY ---
 // CartItem không nên kế thừa (extends) Product.
