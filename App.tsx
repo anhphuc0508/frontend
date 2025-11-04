@@ -1,8 +1,23 @@
-// File: App.tsx (Đã dọn dẹp logic review)
+// File: src/App.tsx (Đã gộp và vá lỗi)
+
 import React, { useState, useCallback, useEffect } from 'react';
 import api from './lib/axios';
 import { CartProvider } from './contexts/CartContext';
-import { Product, Theme, User, Order, OrderStatus, CartItem, UserResponse , CreateProductRequest, PaymentStatus} from './types';
+
+// [ĐÃ GỘP] Bổ sung 'ProductVariant' từ file (1) và 'PaymentStatus' từ file (2)
+import { 
+    Product, 
+    Theme, 
+    User, 
+    Order, 
+    OrderStatus, 
+    CartItem, 
+    UserResponse , 
+    CreateProductRequest,
+    ProductVariant, // <-- Từ App(1).tsx
+    PaymentStatus   // <-- Từ App.tsx
+} from './types';
+
 import Header from './components/Header';
 import Footer from './components/Footer'; 
 import HomePage from './components/HomePage';
@@ -19,7 +34,7 @@ import AdminPage from './components/AdminPage';
 import AccountPage from './components/AccountPage';
 import OrderHistoryPage from './components/OrderHistoryPage';
 
-// ... (tất cả các hàm map... giữ nguyên) ...
+// [ƯU TIÊN FILE 2] Sử dụng logic map mới nhất từ App.tsx
 const parseVariantName = (name: string): { flavor: string, size: string } => {
     const sizeRegex = /(\d+(\.\d+)?\s*(Lbs|kg|Servings))/i;
     const sizeMatch = name.match(sizeRegex);
@@ -36,6 +51,8 @@ const parseVariantName = (name: string): { flavor: string, size: string } => {
         size: size 
     };
 };
+
+// [ƯU TIÊN FILE 2] Sử dụng logic map mới nhất từ App.tsx
 const mapProductResponseToProduct = (res: any): Product => {
   const mappedVariants = (res.variants || []).map((v: any) => {
       const { flavor: parsedFlavor, size: parsedSize } = parseVariantName(v.name);
@@ -68,6 +85,8 @@ const mapProductResponseToProduct = (res: any): Product => {
     brandId: brandId,
   };
 };
+
+// [ƯU TIÊN FILE 2] Sử dụng logic map mới nhất từ App.tsx
 const mapBackendOrderToFrontendOrder = (beOrder: any): Order => {
   
   const mapStatus = (status: string): OrderStatus => {
@@ -115,7 +134,7 @@ const mapBackendOrderToFrontendOrder = (beOrder: any): Order => {
 type Page = 'home' | 'product' | 'category' | 'checkout' | 'brands' | 'account' | 'order-history';
 
 const App: React.FC = () => {
-  // ... (tất cả state giữ nguyên) ...
+  // [ƯU TIÊN FILE 2] State
   const [page, setPage] = useState<Page>('home');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]); 
@@ -128,14 +147,21 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdminViewingSite, setIsAdminViewingSite] = useState(false);
 
+  // [ƯU TIÊN FILE 2] useEffect Theme
   useEffect(() => {
-    // ... (theme useEffect giữ nguyên)
+    const body = document.body;
+    body.className = 'bg-gym-darker text-white'; 
+    if (currentUser?.role === 'ADMIN' && !isAdminViewingSite) {
+        body.classList.add(`admin-theme-${theme}`);
+    } else {
+        body.classList.add(`theme-${theme}`);
+    }
   }, [theme, currentUser, isAdminViewingSite]);
 
   
+  // [ƯU TIÊN FILE 2] fetchProducts
   const fetchProducts = useCallback(async () => {
     try {
-      // Sửa lỗi lặp API (bỏ /api/v1)
       const res = await api.get('/products');
       console.log("Đã tải lại products:", res.data);
       const mappedProducts = res.data.map(mapProductResponseToProduct);
@@ -145,10 +171,10 @@ const App: React.FC = () => {
     }
   }, []); 
 
+  // [ƯU TIÊN FILE 2] fetchOrders (nhận tham số)
   const fetchOrders = useCallback(async (userRole: 'ADMIN' | 'USER') => {
     try {
       const endpoint = userRole === 'ADMIN' ? '/orders' : '/orders/my-orders';
-      // Sửa lỗi lặp API (bỏ /api/v1)
       const res = await api.get(endpoint);
       
       const mappedOrders = res.data.map(mapBackendOrderToFrontendOrder);
@@ -160,7 +186,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // ... (useEffect chính giữ nguyên) ...
+  // [ƯU TIÊN FILE 2] useEffect chính (tải orders ngay khi có user)
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userJson = localStorage.getItem('user'); 
@@ -187,7 +213,7 @@ const App: React.FC = () => {
   }, [fetchProducts, fetchOrders]);
 
 
-  // ... (handleLoginSuccess, handleLogout giữ nguyên) ...
+  // [ƯU TIÊN FILE 2] handleLoginSuccess (tải orders ngay khi login)
   const handleLoginSuccess = useCallback((userResponse: UserResponse) => { 
     localStorage.setItem('user', JSON.stringify(userResponse));
     const userRole = userResponse.role as ('USER' | 'ADMIN');
@@ -205,6 +231,7 @@ const App: React.FC = () => {
     }
   }, [fetchOrders]); 
 
+  // [ƯU TIÊN FILE 2] handleLogout (xóa orders state)
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user'); 
@@ -215,7 +242,7 @@ const App: React.FC = () => {
   }, []);
 
   
-  // ... (Các hàm CRUD product giữ nguyên) ...
+  // [ƯU TIÊN FILE 2] Các hàm CRUD product
   const handleAddProduct = useCallback(async (request: CreateProductRequest) => {
     try {
       await api.post('/products', request); 
@@ -251,7 +278,7 @@ const App: React.FC = () => {
     }
   }, []);
   
-  // ... (Các hàm handle... còn lại giữ nguyên) ...
+  // [ƯU TIÊN FILE 2] handleOrderSuccess (callback sau khi checkout thành công)
   const handleOrderSuccess = useCallback(() => {
     fetchProducts(); 
     if (currentUser) {
@@ -262,15 +289,45 @@ const App: React.FC = () => {
   }, [fetchProducts, fetchOrders, currentUser]); 
 
 
-  const handleUpdateOrderStatus = useCallback((orderId: string, status: OrderStatus) => {
-    // TODO: Gọi API PUT /api/v1/orders/{id}/status 
-    setOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId ? { ...order, status } : order
-      )
-    );
-  }, []); 
+  // [GỘP LOGIC] Lấy logic đầy đủ từ File 1 (App(1).tsx) và
+  // Sửa lại cho phù hợp với 'fetchOrders(userRole)' của File 2.
+  const handleUpdateOrderStatus = useCallback(async (orderId: string, status: OrderStatus) => {
+    // Phải kiểm tra currentUser trước để lấy 'role'
+    if (!currentUser) {
+        alert('Vui lòng đăng nhập lại để thực hiện.');
+        return;
+    }
 
+    try {
+        const orderIdNum = parseInt(orderId.replace(/[^0-9]/g, ''));
+        
+        // Logic này lấy từ App(1).tsx
+        if (currentUser.role === 'ADMIN') {
+            // Logic này sẽ chạy khi Admin chọn BẤT KỲ trạng thái nào (kể cả CANCELLED)
+            await api.put(`/orders/admin/${orderIdNum}/status`, { 
+                newStatus: status // Gửi Enum (ví dụ: "CANCELLED", "COMPLETED")
+            });
+        
+        } else if (status === 'Đã hủy') {
+            // Logic này chỉ dành cho user (không phải admin) bấm nút hủy
+            await api.put(`/orders/${orderIdNum}/cancel`);
+        } else {
+            alert('Không có quyền thay đổi trạng thái này.');
+            return;
+        }
+
+        // Sửa lại lời gọi fetchOrders cho phù hợp với File 2
+        await fetchOrders(currentUser.role); // Tải lại danh sách sau khi update thành công
+        alert(`Cập nhật trạng thái đơn hàng ${orderId} thành công!`); 
+
+    } catch (err: any) {
+        console.error("Lỗi Cập nhật trạng thái đơn hàng:", err);
+        // Hiển thị lỗi từ Backend (ví dụ: "Trạng thái đơn hàng không hợp lệ...")
+        alert("LỖI: " + (err as any).response?.data?.message || (err as any).message);
+    }
+  }, [currentUser, fetchOrders]); // Dependencies là [currentUser, fetchOrders]
+
+  // [ƯU TIÊN FILE 2] Các hàm điều hướng
   const handleAdminViewSite = useCallback(() => {
     setIsAdminViewingSite(true);
     setPage('home');
@@ -342,10 +399,7 @@ const App: React.FC = () => {
     }
   }, [currentUser]);
 
-  // <<< SỬA LỖI 1: XÓA 'handleAddReview' KHỎI APP.TSX >>>
-  // (Đã xóa hàm 'handleAddReview' ở đây)
-  
-  // Các hàm còn lại
+  // [ƯU TIÊN FILE 2] Các hàm handler còn lại (đã xóa logic review)
   const handleAuthClick = useCallback(() => {
     setIsAuthModalOpen(true);
   }, []);
@@ -355,15 +409,14 @@ const App: React.FC = () => {
   }, []);
 
 
+  // [ƯU TIÊN FILE 2] renderPage (đã xóa onAddReview và dùng onOrderSuccess)
   const renderPage = () => {
     switch (page) {
       
-      // <<< SỬA LỖI 2: XÓA PROP 'onAddReview' >>>
       case 'product':
         return <ProductPage 
                   product={selectedProduct!} 
                   onBack={handleGoHome} 
-                  
                   currentUser={currentUser}
                   // 'onAddReview' đã bị xóa
                   onAuthClick={handleAuthClick}
@@ -379,7 +432,7 @@ const App: React.FC = () => {
       case 'checkout':
         return <CheckoutPage 
                   onBackToShop={handleGoHome} 
-                  onOrderSuccess={handleOrderSuccess} 
+                  onOrderSuccess={handleOrderSuccess} // Dùng onOrderSuccess
                 />;
 
       case 'brands':
@@ -396,7 +449,7 @@ const App: React.FC = () => {
     }
   };
 
-  // ... (Phần render Admin và return() giữ nguyên) ...
+  // [ƯU TIÊN FILE 2] Render AdminPage
   if (currentUser?.role === 'ADMIN' && !isAdminViewingSite) {
     return <AdminPage 
         currentUser={currentUser} 
@@ -407,10 +460,11 @@ const App: React.FC = () => {
         onUpdateProduct={handleUpdateProduct}
         onDeleteProduct={handleDeleteProduct}
         orders={orders}
-        onUpdateOrderStatus={handleUpdateOrderStatus}
+        onUpdateOrderStatus={handleUpdateOrderStatus} // Truyền hàm đã vá lỗi
     />;
   }
 
+  // [ƯU TIÊN FILE 2] Render App
   return (
     <CartProvider currentUser={currentUser}>
       <div className="bg-gym-darker text-white font-sans selection:bg-gym-yellow selection:text-gym-darker">

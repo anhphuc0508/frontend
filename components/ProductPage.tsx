@@ -25,6 +25,7 @@ interface ProductPageProps {
   currentUser: User | null;
   onAuthClick: () => void;
   onStockSubscribe: (productId: number, email: string) => void;
+  onCategorySelect: (category: string) => void;
 }
 
 const ProductPage: React.FC<ProductPageProps> = ({
