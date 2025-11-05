@@ -1,4 +1,4 @@
-// src/components/admin/AddProductModal.tsx (Đã sửa)
+// src/components/admin/AddProductModal.tsx (ĐÃ SỬA LỖI ID THƯƠNG HIỆU & DANH MỤC)
 import React, { useState, useEffect } from 'react';
 import { Product, CreateProductRequest, ProductVariantRequest } from '../types';
 
@@ -10,7 +10,6 @@ interface AddProductModalProps {
   productToEdit: Product | null;
 }
 
-// === SỬA ĐỔI 1: Thêm flavor và size vào state của form ===
 type VariantFormState = Omit<ProductVariantRequest, 'price' | 'stockQuantity' | 'salePrice' | 'flavor' | 'size'> & {
   price: string;
   stockQuantity: string;
@@ -40,7 +39,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
   const smallInputStyles =
     "w-full px-2 py-1.5 text-sm bg-[var(--admin-bg-card)] border border-[var(--admin-border-color)] rounded-md text-[var(--admin-text-main)] placeholder-[var(--admin-text-secondary)] focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)]";
 
-  // === SỬA ĐỔI 2: Cập nhật state khi mở modal ===
+  // useEffect (Đã sửa v.stock_quantity -> v.stockQuantity)
   useEffect(() => {
     if (isOpen) {
       if (isEditMode && productToEdit) {
@@ -54,9 +53,9 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
           sku: v.sku,
           price: String(v.price),
           salePrice: String(v.oldPrice || ''),
-          stockQuantity: String(v.stock_quantity),
-          flavor: v.flavor || '', // Lấy data
-          size: v.size || '',     // Lấy data
+          stockQuantity: String(v.stockQuantity), // ĐÃ SỬA
+          flavor: v.flavor || '',
+          size: v.size || '',
         }));
         setVariantsState(variantsFromProduct);
       } else {
@@ -100,7 +99,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
     setVariantsState(newVariants);
   };
 
-  // === SỬA ĐỔI 3: Gửi đi flavor và size ===
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -119,20 +117,19 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
         price: v.price.trim(),
         stockQuantity: v.stockQuantity.trim(),
         salePrice: v.salePrice.trim(),
-        flavor: v.flavor.trim(), // Lấy data
-        size: v.size.trim(),     // Lấy data
+        flavor: v.flavor.trim(),
+        size: v.size.trim(),
       };
 
       if (!t.name) { errorMessage = 'Tên biến thể bắt buộc'; break; }
       if (!t.sku) { errorMessage = 'SKU bắt buộc'; break; }
-      if (!t.flavor) { errorMessage = 'Hương vị là bắt buộc'; break; } // Bắt buộc
-      if (!t.size) { errorMessage = 'Kích cỡ là bắt buộc'; break; }   // Bắt buộc
-      
+      if (!t.flavor) { errorMessage = 'Hương vị là bắt buộc'; break; }
+      if (!t.size) { errorMessage = 'Kích cỡ là bắt buộc'; break; }
       if (!t.price || isNaN(Number(t.price)) || Number(t.price) <= 0) {
         errorMessage = 'Giá không hợp lệ'; break;
       }
-      if (!t.stockQuantity || isNaN(Number(t.stockQuantity))) {
-        errorMessage = 'Tồn kho không hợp lệ'; break;
+      if (t.stockQuantity.trim() === '' || isNaN(Number(t.stockQuantity))) {
+        errorMessage = 'Tồn kho không hợp lệ (phải là số, ví dụ: 0)'; break;
       }
       if (t.salePrice && isNaN(Number(t.salePrice))) {
         errorMessage = 'Giá KM không hợp lệ'; break;
@@ -144,8 +141,8 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
         price: Number(t.price),
         salePrice: t.salePrice ? Number(t.salePrice) : undefined,
         stockQuantity: Number(t.stockQuantity),
-        flavor: t.flavor, // Gửi đi
-        size: t.size,     // Gửi đi
+        flavor: t.flavor,
+        size: t.size,
       });
     }
 
@@ -160,7 +157,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
 
     const payload: CreateProductRequest = {
       name: name.trim(),
-      description: description.trim() || '', // Gửi '' thay vì null
+      description: description.trim() || '',
       categoryId: categoryId,
       brandId: brandId,
       variants: finalVariants,
@@ -195,7 +192,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
         >
           {/* Thông tin chung */}
           <section className="space-y-4">
-            {/* ... (Tên sản phẩm, Danh mục, Thương hiệu, Mô tả - giữ nguyên) ... */}
              <div>
               <label className="block text-sm font-medium text-[var(--admin-text-secondary)] mb-1">
                 Tên sản phẩm (Chung)
@@ -220,11 +216,16 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                   onChange={e => setCategoryId(Number(e.target.value))}
                   className={inputStyles}
                 >
+                  {/* LƯU Ý: 
+                    Tôi đang giả định các ID (1, 3, 4) này khớp với DB của bạn 
+                    (dựa trên data mẫu bạn cung cấp).
+                    Nếu 'Tăng cân' trong DB của bạn là ID=5, bạn phải đổi value={3} thành value={5}
+                  */}
                   <option value={0}>Chọn danh mục</option>
                   <option value={1}>Whey Protein</option>
-                  <option value={2}>Pre-Workout</option>
                   <option value={3}>Tăng cân</option>
                   <option value={4}>Tăng sức mạnh</option>
+                  {/* (Tôi đã xóa Pre-Workout (ID 2) vì data mẫu không có) */}
                 </select>
               </div>
               <div>
@@ -237,10 +238,23 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                   className={inputStyles}
                 >
                   <option value={0}>Chọn thương hiệu</option>
+                  
+                  {/* ============================================ */}
+                  {/* === SỬA LỖI 2 (BRAND ID) TẠI ĐÂY === */}
+                  {/* (ID đã khớp 100% với file constants.tsx) */}
+                  {/* ============================================ */}
                   <option value={1}>Optimum Nutrition</option>
-                  <option value={2}>C4</option>
-                  <option value={3}>MyProtein</option>
-                  <option value={4}>GymSup</option>
+                  <option value={2}>Myprotein</option>
+                  <option value={3}>Rule 1</option>
+                  <option value={4}>Applied Nutrition</option>
+                  <option value={5}>Nutrabolt (C4)</option>
+                  <option value={6}>BPI Sports</option>
+                  <option value={7}>Thorne Research</option>
+                  <option value={8}>Nutrex</option>
+                  <option value={9}>Redcon1</option>
+                  <option value={10}>GymSup</option>
+                  {/* ============================================ */}
+
                 </select>
               </div>
             </div>
@@ -287,7 +301,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                     )}
                   </div>
 
-                  {/* === SỬA ĐỔI 4: Thêm 2 trường vào JSX === */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-[var(--admin-text-secondary)] mb-1">
@@ -317,7 +330,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                     </div>
                   </div>
                   
-                  {/* Dàn layout mới cho 2 trường bắt buộc */}
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                      <div>
                         <label className="block text-xs font-medium text-[var(--admin-text-secondary)] mb-1">
@@ -390,7 +402,6 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                   </div>
                 </div>
               ))}
-              {/* ... (Nút + Thêm biến thể) ... */}
                 <button
                 type="button"
                 onClick={handleAddVariantRow}

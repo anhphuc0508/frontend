@@ -54,6 +54,9 @@ const parseVariantName = (name: string): { flavor: string, size: string } => {
 };
 
 // [ƯU TIÊN FILE 2] Sử dụng logic map mới nhất từ App.tsx
+// File: src/App.tsx
+
+// [ƯU TIÊN FILE 2] Sử dụng logic map mới nhất từ App.tsx
 const mapProductResponseToProduct = (res: any): Product => {
   const mappedVariants = (res.variants || []).map((v: any) => {
       const { flavor: parsedFlavor, size: parsedSize } = parseVariantName(v.name);
@@ -62,14 +65,21 @@ const mapProductResponseToProduct = (res: any): Product => {
   const allFlavors: string[] = [...new Set<string>(mappedVariants.map((v: any) => v.flavor as string).filter(Boolean))];
   const allSizes: string[] = [...new Set<string>(mappedVariants.map((v: any) => v.size as string).filter(Boolean))];
   const firstVariant = mappedVariants.length > 0 ? mappedVariants[0] : null;
-  const categoryId = res.category?.categoryId || 0;
-  const brandId = res.brand?.brandId || 0;
+
+  // ===================================
+  // === SỬA LỖI Ở ĐÂY ===
+  // Đọc ID trực tiếp từ "res", không đọc từ "res.category"
+  // ===================================
+  const categoryId = res.categoryId || 0;
+  const brandId = res.brandId || 0;
+  // ===================================
+
   return {
     id: res.productId,
     name: res.name,
     description: res.description,
-    category: res.categoryName,
-    brand: res.brandName,
+    category: res.categoryName, // Dòng này của bạn đã đúng (đọc phẳng)
+    brand: res.brandName,       // Dòng này của bạn đã đúng (đọc phẳng)
     variants: mappedVariants, 
     price: firstVariant?.price || 0,
     oldPrice: firstVariant?.oldPrice || undefined,
@@ -82,8 +92,8 @@ const mapProductResponseToProduct = (res: any): Product => {
     sold: 0,
     flavors: allFlavors, 
     sizes: allSizes,     
-    categoryId: categoryId,
-    brandId: brandId,
+    categoryId: categoryId, // <--- Giờ sẽ là ID đúng
+    brandId: brandId,     // <--- Giờ sẽ là ID đúng
   };
 };
 
