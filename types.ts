@@ -1,4 +1,4 @@
-// File: types.ts (Đã cập nhật ProductVariantRequest)
+// File: types.ts (Đã cập nhật ProductVariantRequest và CartItem)
 // FIX: Removed self-referential import of Product type.
 
 export interface ProductVariant {
@@ -40,20 +40,18 @@ export interface Product {
   brandId?: number;
   
 }
-// --- SỬA LỖI LOGIC Ở ĐÂY ---
-// CartItem không nên kế thừa (extends) Product.
-// Nó nên là một đối tượng riêng, đại diện cho MỘT biến thể đã chọn.
+// --- SỬA LỖI LOGIC Ở ĐÂY: Thêm productName, size, flavor vào CartItem ---
 export interface CartItem {
   variantId: number; // Hoặc sku: string
   productId: number;
-  name: string; // Tên sản phẩm (hoặc tên biến thể)
+  name: string; // Tên biến thể (vd: Vị Chocolate 5Lbs)
+  productName: string; // <-- ĐÃ THÊM: Tên sản phẩm chính (vd: Gold Standard 100% Whey)
   image: string; // Ảnh đại diện
   price: number; // Giá tại lúc mua
   quantity: number;
   sku: string;
-  size?: string;   // Thêm '?' để nó là optional
+  size?: string;
   flavor?: string;
-
 }
 
 export interface Brand {
@@ -105,8 +103,6 @@ export interface User {
 export type OrderStatus = 'Đã giao hàng' | 'Đang xử lý' | 'Đã hủy';
 export type PaymentStatus = 'Chưa thanh toán' | 'Đã thanh toán';
 
-// --- ĐÃ XÓA 'ProductVariant' BỊ TRÙNG LẶP Ở ĐÂY ---
-
 export interface Order {
   id: string;
   date: string;
@@ -131,7 +127,6 @@ export interface UserResponse {
   role: string; // (Backend trả về string "USER" hoặc "ADMIN")
 }
 
-// === SỬA ĐỔI Ở ĐÂY ===
 export interface ProductVariantRequest {
   name: string;
   sku: string;

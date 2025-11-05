@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+// File: src/AdminPage.tsx (ĐÃ SỬA LỖI MAPPING HIỂN THỊ)
+import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { User, Theme, Product, Order, OrderStatus, CreateProductRequest } from '../types';
 import AddProductModal from './AddProductModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
-// SVG Icon Components
+// SVG Icon Components (Giữ nguyên)
 const PaletteIcon: React.FC<{className?: string}> = ({className}) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402a3.75 3.75 0 00-5.304-5.304L4.098 14.6c-1.464 1.464-1.464 3.84 0 5.304z" />
@@ -55,7 +56,6 @@ const HomeIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) =
     </svg>
 );
 
-// THÊM ICON NÀY
 const ChevronDownIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
@@ -136,7 +136,7 @@ const DashboardView: React.FC<{products: Product[]}> = ({products}) => (
     </>
 );
 
-// THAY THẾ TOÀN BỘ 'ProductManagementView' NÀY
+// ProductManagementView giữ nguyên
 const ProductManagementView: React.FC<{
     products: Product[];
     onEdit: (product: Product) => void;
@@ -205,10 +205,9 @@ const ProductManagementView: React.FC<{
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    {/* Sửa lại các cột của bảng chính */}
                     <thead className="text-xs text-[var(--admin-text-secondary)] uppercase border-b border-[var(--admin-border-color)]">
                       <tr>
-                        <th scope="col" className="px-2 py-3 w-12"></th> {/* Cột cho nút expand */}
+                        <th scope="col" className="px-2 py-3 w-12"></th>
                         <th scope="col" className="px-6 py-3">Tên sản phẩm</th>
                         <th scope="col" className="px-6 py-3">Danh mục</th>
                         <th scope="col" className="px-6 py-3">Thương hiệu</th>
@@ -218,7 +217,6 @@ const ProductManagementView: React.FC<{
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Dùng React.Fragment để render 2 hàng cho mỗi sản phẩm */}
                       {filteredProducts.map((product) => {
                         const isExpanded = expandedProductId === product.id;
                         
@@ -274,11 +272,11 @@ const ProductManagementView: React.FC<{
                                     <table className="w-full text-sm">
                                       <thead className="bg-[var(--admin-bg-card)] text-xs text-[var(--admin-text-secondary)] uppercase">
                                         <tr>
-                                          <th className="px-4 py-2 text-left">Tên biến thể</th>
-                                          <th className="px-4 py-2 text-left">SKU</th>
-                                          <th className="px-4 py-2 text-left">Giá</th>
-                                          <th className="px-4 py-2 text-left">Giá KM</th>
-                                          <th className="px-4 py-2 text-left">Tồn kho</th>
+                                          <th scope="col" className="px-4 py-2 text-left">Tên biến thể</th>
+                                          <th scope="col" className="px-4 py-2 text-left">SKU</th>
+                                          <th scope="col" className="px-4 py-2 text-left">Giá</th>
+                                          <th scope="col" className="px-4 py-2 text-left">Giá KM</th>
+                                          <th scope="col" className="px-4 py-2 text-left">Tồn kho</th>
                                         </tr>
                                       </thead>
                                       <tbody className="bg-[var(--admin-bg-card)]">
@@ -317,20 +315,44 @@ const ProductManagementView: React.FC<{
     );
 };
 
+// --- LOGIC CHUYỂN ĐỔI CỤC BỘ CHO ADMINPAGE.TSX ---
+
+// (!!! ĐÃ XÓA HÀM `mapBackendStatusToVN` VÌ NÓ GÂY LỖI DOUBLE-MAPPING !!!)
+
+// Map Tiếng Việt hiển thị sang Enum Tiếng Anh (Chỉ để tham khảo, không dùng trong onChange)
+const VN_TO_BE_STATUS_MAP: Record<string, string> = {
+    'Đang xử lý': 'PENDING_CONFIRMATION', 
+    'Đã giao hàng': 'COMPLETED',
+    'Đã hủy': 'CANCELLED',
+};
+// --- KẾT THÚC LOGIC CHUYỂN ĐỔI ---
+
+
+// OrderManagementView đã được cập nhật: Xóa cột SKU và sửa Colspan
 const OrderManagementView: React.FC<{
     orders: Order[];
     onUpdateStatus: (orderId: string, status: OrderStatus) => void;
 }> = ({ orders, onUpdateStatus }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('Tất cả');
-    
+    // Thêm state để theo dõi đơn hàng đang được mở
+    const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+
     const inputStyles = "bg-[var(--admin-bg-card)] border border-[var(--admin-border-color)] rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 ring-[var(--admin-text-accent)]";
 
+    // Đảm bảo orderStatuses chỉ là Tiếng Việt để hiển thị trong dropdown
     const orderStatuses: OrderStatus[] = ['Đang xử lý', 'Đã giao hàng', 'Đã hủy'];
 
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
-            const matchesStatus = statusFilter === 'Tất cả' || order.status === statusFilter;
+            // ==================================
+            // === SỬA LỖI LOGIC FILTER Ở ĐÂY ===
+            // ==================================
+            // order.status đã là Tiếng Việt (vd: "Đã hủy")
+            const vnStatus = order.status; 
+            // ==================================
+            
+            const matchesStatus = statusFilter === 'Tất cả' || vnStatus === statusFilter;
             const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
                                   order.customer.name.toLowerCase().includes(searchTerm.toLowerCase());
             return matchesStatus && matchesSearch;
@@ -350,6 +372,10 @@ const OrderManagementView: React.FC<{
         return status === 'Đã thanh toán' ? 'text-green-400' : 'text-yellow-400';
     };
 
+    const handleToggleExpand = (orderId: string) => {
+        setExpandedOrderId(prevId => (prevId === orderId ? null : orderId));
+    };
+
 
     return (
         <>
@@ -366,7 +392,7 @@ const OrderManagementView: React.FC<{
                             type="text" 
                             placeholder="Tìm theo Mã đơn hàng hoặc Tên..." 
                             value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
+                            onChange={e => setSearchTerm(e.g.value)}
                             className={`${inputStyles} w-full pl-10`} 
                         />
                     </div>
@@ -385,6 +411,8 @@ const OrderManagementView: React.FC<{
                   <table className="w-full text-sm text-left">
                     <thead className="text-xs text-[var(--admin-text-secondary)] uppercase border-b border-[var(--admin-border-color)]">
                       <tr>
+                        {/* Thêm cột cho nút expand */}
+                        <th scope="col" className="px-2 py-3 w-12"></th>
                         <th scope="col" className="px-6 py-3">Mã đơn hàng</th>
                         <th scope="col" className="px-6 py-3">Khách hàng</th>
                         <th scope="col" className="px-6 py-3">Ngày đặt</th>
@@ -394,25 +422,129 @@ const OrderManagementView: React.FC<{
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredOrders.map((order) => (
-                        <tr key={order.id} className="border-b border-[var(--admin-border-color)] hover:bg-[var(--admin-bg-hover)]">
-                          <td className="px-6 py-4 font-mono text-[var(--admin-text-accent)]">{order.id}</td>
-                          <td className="px-6 py-4 font-medium">{order.customer.name}</td>
-                          <td className="px-6 py-4">{order.date}</td>
-                          <td className="px-6 py-4">{order.total.toLocaleString('vi-VN')}₫</td>
-                          <td className={`px-6 py-4 font-semibold ${getPaymentStatusClass(order.paymentStatus)}`}>{order.paymentStatus}</td>
-                          <td className="px-6 py-4">
-                            <select 
-                                value={order.status}
-                                onChange={(e) => onUpdateStatus(order.id, e.target.value as OrderStatus)}
-                                className={`text-xs font-semibold rounded-md p-1.5 border-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--admin-bg-card)] focus:ring-[var(--admin-text-accent)] ${getStatusClass(order.status)}`}
-                                style={{ backgroundColor: 'transparent' }}
-                            >
-                               {orderStatuses.map(s => <option key={s} value={s} className="bg-[var(--admin-bg-card)] text-[var(--admin-text-main)]">{s}</option>)}
-                            </select>
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredOrders.map((order) => {
+                        const isExpanded = expandedOrderId === order.id;
+                        // Giả định Order có thuộc tính items: [{ productName, sku, price, quantity, size, flavor, image }]
+                        const orderItems = (order as any).items || []; 
+
+                        // ==================================
+                        // === SỬA LỖI LOGIC HIỂN THỊ Ở ĐÂY ===
+                        // ==================================
+                        // order.status đã là Tiếng Việt (vd: "Đã hủy")
+                        const currentVNStatus = order.status; 
+                        // ==================================
+
+                        return (
+                          <React.Fragment key={order.id}>
+                            {/* === HÀNG 1: THÔNG TIN ĐƠN HÀNG === */}
+                            <tr className="border-b border-[var(--admin-border-color)] hover:bg-[var(--admin-bg-hover)]">
+                              
+                              {/* Nút Expand */}
+                              <td className="px-2 py-4 text-center">
+                                <button 
+                                  onClick={() => handleToggleExpand(order.id)} 
+                                  className="text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-main)] transition-colors"
+                                  disabled={orderItems.length === 0}
+                                  title={orderItems.length === 0 ? "Không có chi tiết" : "Xem chi tiết"}
+                                >
+                                  <ChevronDownIcon className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''} ${orderItems.length === 0 ? 'opacity-30' : ''}`} />
+                                </button>
+                              </td>
+
+                              <td className="px-6 py-4 font-mono text-[var(--admin-text-accent)]">{order.id}</td>
+                              <td className="px-6 py-4 font-medium">{order.customer.name}</td>
+                              <td className="px-6 py-4">{order.date}</td>
+                              <td className="px-6 py-4">{order.total.toLocaleString('vi-VN')}₫</td>
+                              <td className={`px-6 py-4 font-semibold ${getPaymentStatusClass(order.paymentStatus)}`}>{order.paymentStatus}</td>
+                              <td className="px-6 py-4">
+                                <select 
+                                    // Dùng thẳng giá trị Tiếng Việt (currentVNStatus)
+                                    value={currentVNStatus} 
+                                    
+                                    // Logic onChange (gửi đi Tiếng Việt) đã đúng từ lần trước
+                                    onChange={(e) => {
+                                        const vnValue = e.target.value as OrderStatus;
+                                        console.log(`[STATUS_UPDATE] Gửi ID: ${order.id}, Trạng thái VN: ${vnValue}`);
+                                        onUpdateStatus(order.id, vnValue);
+                                    }}
+                                    
+                                    // Dùng trạng thái Tiếng Việt để lấy class CSS
+                                    className={`text-xs font-semibold rounded-md p-1.5 border-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--admin-bg-card)] focus:ring-[var(--admin-text-accent)] ${getStatusClass(currentVNStatus)}`}
+                                    style={{ backgroundColor: 'transparent' }}
+                                >
+                                  {orderStatuses.map(s => <option key={s} value={s} className="bg-[var(--admin-bg-card)] text-[var(--admin-text-main)]">{s}</option>)}
+                                </select>
+                              </td>
+                            </tr>
+                            
+                            {/* === HÀNG 2: CHI TIẾT SẢN PHẨM (ẨN/HIỆN) === */}
+                            {isExpanded && (
+                              <tr className="bg-[var(--admin-bg-hover)]">
+                                {/* Colspan là 7 (1 nút + 6 cột info) */}
+                                <td colSpan={7} className="py-4 px-6 md:px-10 lg:px-16">
+                                  <h4 className="text-sm font-bold text-[var(--admin-text-main)] mb-2 ml-1">Chi tiết đơn hàng</h4>
+                                  <div className="border border-[var(--admin-border-color)] rounded-lg overflow-hidden">
+                                    <table className="w-full text-sm">
+                                      <thead className="bg-[var(--admin-bg-card)] text-xs text-[var(--admin-text-secondary)] uppercase">
+                                        <tr>
+                                          <th className="px-4 py-2 text-left">Sản phẩm</th>
+                                          {/* ĐÃ XÓA SKU */}
+                                          <th className="px-4 py-2 text-left">Đơn giá</th>
+                                          <th className="px-4 py-2 text-left">Số lượng</th>
+                                          <th className="px-4 py-2 text-left">Thành tiền</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="bg-[var(--admin-bg-card)]">
+                                        {orderItems.map((item: any) => (
+                                          <tr key={item.sku} className="border-t border-[var(--admin-border-color)]">
+                                            
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center space-x-3">
+                                                    <img 
+                                                        src={item.image || (orderItems.length > 0 && orderItems[0]?.image) || ''} 
+                                                        alt={item.productName || item.sku} 
+                                                        className="w-8 h-8 rounded-md object-cover"
+                                                    />
+                                                    {/* SỬA LỖI FALLBACK: Ưu tiên ProductName > Name > SKU */}
+                                                    <span className="font-medium text-[var(--admin-text-main)]">
+                                                        {item.productName || item.name || `SKU: ${item.sku || 'Không rõ'}`}
+                                                    </span>
+                                                </div>
+                                                {(item.size || item.flavor) && (
+                                                    <p className="text-xs text-[var(--admin-text-secondary)] mt-1 ml-11"> 
+                                                        {item.size && `Kích cỡ: ${item.size}`}
+                                                        {item.size && item.flavor && ` | `} 
+                                                        {item.flavor && `Hương vị: ${item.flavor}`}
+                                                    </p>
+                                                )}
+                                            </td>
+                                            
+                                            {/* ĐÃ XÓA SKU: <td className="px-4 py-3 font-mono">{item.sku || 'N/A'}</td> */}
+                                            
+                                            <td className="px-4 py-3">{item.price.toLocaleString('vi-VN')}₫</td>
+                                            <td className="px-4 py-3">{item.quantity}</td>
+                                            <td className="px-4 py-3 font-semibold">
+                                                {(item.price * item.quantity).toLocaleString('vi-VN')}₫
+                                            </td>
+                                          </tr>
+                                        ))}
+                                        {orderItems.length === 0 && (
+                                            <tr>
+                                                {/* Cập nhật Colspan từ 5 xuống 4 */}
+                                                <td colSpan={4} className="text-center py-4 text-[var(--admin-text-secondary)]">
+                                                    Đơn hàng này không có chi tiết sản phẩm.
+                                                </td>
+                                            </tr>
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

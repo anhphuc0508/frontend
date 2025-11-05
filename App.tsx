@@ -1,10 +1,9 @@
-// File: src/App.tsx (Đã gộp và vá lỗi)
+// File: src/App.tsx (Đã SỬA LỖI Typo </main> main>)
 
 import React, { useState, useCallback, useEffect } from 'react';
 import api from './lib/axios';
 import { CartProvider } from './contexts/CartContext';
 
-// [ĐÃ GỘP] Bổ sung 'ProductVariant' từ file (1) và 'PaymentStatus' từ file (2)
 import { 
     Product, 
     Theme, 
@@ -14,8 +13,10 @@ import {
     CartItem, 
     UserResponse , 
     CreateProductRequest,
-    ProductVariant, // <-- Từ App(1).tsx
-    PaymentStatus   // <-- Từ App.tsx
+    ProductVariant, 
+    PaymentStatus,
+    // Cần thêm productName vào CartItem của types.ts để code này chạy
+    // product: Product
 } from './types';
 
 import Header from './components/Header';
@@ -86,13 +87,14 @@ const mapProductResponseToProduct = (res: any): Product => {
   };
 };
 
-// [ƯU TIÊN FILE 2] Sử dụng logic map mới nhất từ App.tsx
+// *** ĐÃ SỬA LỖI MAPPING ĐƠN HÀNG ĐỂ CÓ THÊM size, flavor, và productName ***
 const mapBackendOrderToFrontendOrder = (beOrder: any): Order => {
   
   const mapStatus = (status: string): OrderStatus => {
-    if (status === 'PENDING_CONFIRMATION') return 'Đang xử lý';
-    if (status === 'DELIVERED') return 'Đã giao hàng';
-    if (status === 'CANCELLED') return 'Đã hủy';
+    // SỬA LỖI MAP TỪ BACKEND: Dùng 'COMPLETED' thay vì 'DELIVERED'
+    if (status === 'PENDING_CONFIRMATION' || status === 'PROCESSING' || status === 'SHIPPING') return 'Đang xử lý';
+    if (status === 'COMPLETED') return 'Đã giao hàng'; // <-- SỬA Ở ĐÂY
+    if (status === 'CANCELLED' || status === 'RETURNED') return 'Đã hủy';
     return 'Đang xử lý'; // Mặc định
   };
 
@@ -102,36 +104,68 @@ const mapBackendOrderToFrontendOrder = (beOrder: any): Order => {
   };
   
   const mapItems = (details: any[]): CartItem[] => {
-    return details.map(d => ({
-      variantId: d.variantId,
-      productId: 0, 
-      name: `${d.productName} - ${d.variantName}`,
-      image: `https://picsum.photos/seed/product${d.variantId}/400/400`, 
-      price: d.priceAtPurchase,
-      quantity: d.quantity,
-      sku: d.sku || 'N/A', 
-    }));
+    return details.map(d => {
+      // Dùng hàm parseVariantName đã có sẵn để trích xuất size/flavor từ variantName
+      const { flavor: parsedFlavor, size: parsedSize } = parseVariantName(d.variantName || d.productName || 'Default Variant');
+      
+      return {
+        variantId: d.variantId,
+        productId: d.productId || 0, // Thêm productId nếu có
+        productName: d.productName || 'N/A', // <-- ĐÃ THÊM: Tên sản phẩm chính (Nguồn lỗi đã được sửa)
+        name: d.variantName || d.productName, // Tên biến thể
+        image: `https://picsum.photos/seed/product${d.variantId || d.productId}/400/400`, 
+        price: d.priceAtPurchase,
+        quantity: d.quantity,
+        sku: d.sku || 'N/A', 
+        size: parsedSize,     // <-- ĐÃ THÊM
+        flavor: parsedFlavor  // <-- ĐÃ THÊM
+      };
+    });
   };
 
   return {
     id: String(beOrder.orderId), 
     date: new Date(beOrder.createdAt).toLocaleString('vi-VN'),
-    status: mapStatus(beOrder.status),
+    status: mapStatus(beOrder.status), // status này đã được hàm mapStatus xử lý
     total: beOrder.totalAmount,
     items: mapItems(beOrder.orderDetails || []),
     customer: {
       name: beOrder.shippingFullName,
-      email: '', 
-      phone: '', 
+      email: beOrder.shippingEmail || '', 
+      phone: beOrder.shippingPhone || '', 
       address: beOrder.shippingAddress,
     },
     paymentStatus: mapPaymentStatus(beOrder.paymentStatus),
     paymentMethod: String(beOrder.paymentMethod).toLowerCase() as ('cod' | 'card'),
   };
 };
+// *** KẾT THÚC PHẦN SỬA LỖI MAPPING ĐƠN HÀNG ***
 
 
 type Page = 'home' | 'product' | 'category' | 'checkout' | 'brands' | 'account' | 'order-history';
+
+// *** HÀM CHUYỂN ĐỔI TỪ TIẾNG VIỆT SANG TIẾNG ANH CHO BACKEND ***
+const mapVietnameseStatusToBackend = (vnStatus: OrderStatus): string => {
+  switch (vnStatus) {
+    case 'Đang xử lý':
+      // Bạn có thể chọn PENDING_CONFIRMATION hoặc PROCESSING tùy logic
+      return 'PENDING_CONFIRMATION'; 
+    
+    // ==================================
+    // === SỬA LỖI LOGIC ENUM Ở ĐÂY ===
+    // ==================================
+    case 'Đã giao hàng':
+      return 'COMPLETED'; // <-- SỬA TỪ 'DELIVERED'
+    // ==================================
+    
+    case 'Đã hủy':
+      return 'CANCELLED';
+    default:
+      return 'PENDING_CONFIRMATION'; 
+  }
+};
+// *** KẾT THÚC HÀM CHUYỂN ĐỔI ***
+
 
 const App: React.FC = () => {
   // [ƯU TIÊN FILE 2] State
@@ -289,10 +323,8 @@ const App: React.FC = () => {
   }, [fetchProducts, fetchOrders, currentUser]); 
 
 
-  // [GỘP LOGIC] Lấy logic đầy đủ từ File 1 (App(1).tsx) và
-  // Sửa lại cho phù hợp với 'fetchOrders(userRole)' của File 2.
+  // *** ĐÃ SỬA LỖI: Áp dụng mapVietnameseStatusToBackend (đã sửa) ***
   const handleUpdateOrderStatus = useCallback(async (orderId: string, status: OrderStatus) => {
-    // Phải kiểm tra currentUser trước để lấy 'role'
     if (!currentUser) {
         alert('Vui lòng đăng nhập lại để thực hiện.');
         return;
@@ -301,31 +333,31 @@ const App: React.FC = () => {
     try {
         const orderIdNum = parseInt(orderId.replace(/[^0-9]/g, ''));
         
-        // Logic này lấy từ App(1).tsx
+        // CHUYỂN ĐỔI TỪ TIẾNG VIỆT SANG TIẾNG ANH (Enum Java)
+        // Hàm này giờ đã map "Đã giao hàng" -> "COMPLETED"
+        const backendStatus = mapVietnameseStatusToBackend(status); // <--- ĐÃ SỬA
+
         if (currentUser.role === 'ADMIN') {
-            // Logic này sẽ chạy khi Admin chọn BẤT KỲ trạng thái nào (kể cả CANCELLED)
             await api.put(`/orders/admin/${orderIdNum}/status`, { 
-                newStatus: status // Gửi Enum (ví dụ: "CANCELLED", "COMPLETED")
+                newStatus: backendStatus // <--- ĐÃ SỬA
             });
         
         } else if (status === 'Đã hủy') {
-            // Logic này chỉ dành cho user (không phải admin) bấm nút hủy
             await api.put(`/orders/${orderIdNum}/cancel`);
         } else {
             alert('Không có quyền thay đổi trạng thái này.');
             return;
         }
 
-        // Sửa lại lời gọi fetchOrders cho phù hợp với File 2
-        await fetchOrders(currentUser.role); // Tải lại danh sách sau khi update thành công
+        await fetchOrders(currentUser.role);
         alert(`Cập nhật trạng thái đơn hàng ${orderId} thành công!`); 
 
     } catch (err: any) {
         console.error("Lỗi Cập nhật trạng thái đơn hàng:", err);
-        // Hiển thị lỗi từ Backend (ví dụ: "Trạng thái đơn hàng không hợp lệ...")
         alert("LỖI: " + (err as any).response?.data?.message || (err as any).message);
     }
-  }, [currentUser, fetchOrders]); // Dependencies là [currentUser, fetchOrders]
+  }, [currentUser, fetchOrders]);
+  // *** KẾT THÚC SỬA ***
 
   // [ƯU TIÊN FILE 2] Các hàm điều hướng
   const handleAdminViewSite = useCallback(() => {
@@ -485,9 +517,15 @@ const App: React.FC = () => {
             isAdminViewingSite={currentUser?.role === 'ADMIN' && isAdminViewingSite}
             onReturnToAdmin={handleAdminReturnToPanel}
         />
+        
+        {/* ======================= */}
+        {/* === SỬA TYPO Ở ĐÂY === */}
+        {/* ======================= */}
         <main className="min-h-screen">
           {renderPage()}
         </main>
+        {/* ======================= */}
+        
         <CartSidebar 
             isOpen={isCartOpen} 
             onClose={() => setIsCartOpen(false)} 
