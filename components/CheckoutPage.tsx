@@ -1,44 +1,56 @@
-import React, { useState } from 'react';
+// File: src/components/CheckoutPage.tsx (ĐÃ SỬA LỖI MÀU CHỮ TÀNG HÌNH)
+
+import React, { useState, useEffect } from 'react';
 import { useCart } from '../contexts/CartContext';
-import api from '../lib/axios'; // Import axios instance
+import api from '../lib/axios';
+import { User } from '../types';
 
 interface CheckoutPageProps {
   onBackToShop: () => void;
-  onOrderSuccess: () => void; // Thêm prop mới
+  onOrderSuccess: () => void;
+  currentUser: User | null;
 }
 
-const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onOrderSuccess }) => {
+const CheckoutPage: React.FC<CheckoutPageProps> = ({ 
+  onBackToShop, 
+  onOrderSuccess, 
+  currentUser 
+}) => {
   const { cartItems, itemCount, clearCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'card'>('cod');
 
-  // Tách state cho địa chỉ (để khớp với CreateOrderRequest.java)
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState(''); // Vẫn giữ email (dù backend không yêu cầu)
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [street, setStreet] = useState(''); // MỚI
-  const [ward, setWard] = useState('');     // MỚI
-  const [district, setDistrict] = useState(''); // MỚI
-  const [city, setCity] = useState('');     // MỚI
+  const [street, setStreet] = useState('');
+  const [ward, setWard] = useState('');
+  const [district, setDistrict] = useState('');
+  const [city, setCity] = useState('');
 
-  const [isPlacingOrder, setIsPlacingOrder] = useState(false); 
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
+  useEffect(() => {
+    if (currentUser) {
+      setFullName(currentUser.name);
+      const mockEmail = currentUser.name.toLowerCase().replace(/\s+/g, '.') + '@example.com';
+      setEmail(mockEmail);
+    }
+  }, [currentUser]); 
 
   const subtotal: number = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-  const shippingFee: number = 0; 
+  const shippingFee: number = 0;
   const total: number = subtotal + shippingFee;
 
-  // Sửa lại hoàn toàn hàm handlePlaceOrder
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isPlacingOrder) return;
     setIsPlacingOrder(true);
 
-    // Build payload items (chỉ variantId và quantity)
     const itemsPayload = cartItems.map(item => ({
       variantId: item.variantId,
       quantity: item.quantity,
     }));
 
-    // Build payload chính (khớp với CreateOrderRequest.java)
     const payload = {
       shippingFullName: fullName,
       shippingPhoneNumber: phone,
@@ -46,24 +58,19 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onOrderSucces
       shippingWard: ward,
       shippingDistrict: district,
       shippingCity: city,
-      paymentMethod: paymentMethod.toUpperCase(), // Gửi 'COD' hoặc 'CARD'
+      paymentMethod: paymentMethod.toUpperCase(), 
       items: itemsPayload,
-      couponCode: null, // Sẽ thêm sau
+      couponCode: null, 
     };
 
     try {
-      // Gọi API (endpoint trong OrderController là "/api/v1/orders")
       await api.post('/orders', payload);
-
       alert('Đặt hàng thành công! Cảm ơn bạn.');
-      
-      // SỬA LỖI: Đợi giỏ hàng xóa xong mới về home
       await clearCart(); 
-      onOrderSuccess(); // Gọi hàm thành công (để tải lại products và về home)
+      onOrderSuccess(); 
 
     } catch (err: any) {
       console.error("Lỗi đặt hàng:", err);
-      // Hiển thị lỗi từ backend (ví dụ: "Không đủ tồn kho")
       const message = err.response?.data?.message || err.response?.data || 'Đã xảy ra lỗi. Vui lòng thử lại.';
       alert(`Lỗi khi đặt hàng: ${message}`);
     } finally {
@@ -72,6 +79,13 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onOrderSucces
   };
 
   const inputStyle = "w-full bg-gym-darker border border-gray-700 rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gym-yellow";
+  
+  // ========================================================
+  // === SỬA LỖI Ở ĐÂY: Đổi 'text-gym-gray' -> 'text-gray-400' ===
+  // ========================================================
+  const readOnlyInputStyle = "w-full bg-gym-dark border border-gray-700 rounded-md p-3 text-gray-600 focus:outline-none cursor-not-allowed";
+  // ========================================================
+
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -95,20 +109,38 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onOrderSucces
             <section>
               <h2 className="text-2xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Thông tin giao hàng</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                
+                {/* Trường FullName (readOnly) */}
                 <div className="sm:col-span-2">
                   <label htmlFor="fullName" className="block text-sm font-medium text-gym-gray mb-1">Họ và tên</label>
-                  <input type="text" id="fullName" value={fullName} onChange={e => setFullName(e.target.value)} className={inputStyle} placeholder="Nguyễn Văn A" required />
+                  <input 
+                    type="text" 
+                    id="fullName" 
+                    value={fullName} 
+                    className={readOnlyInputStyle} // Đã sửa
+                    readOnly 
+                  />
                 </div>
+                
+                {/* Trường Email (readOnly) */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gym-gray mb-1">Email (Để nhận thông báo)</label>
-                  <input type="email" id="email" value={email} onChange={e => setEmail(e.target.value)} className={inputStyle} placeholder="you@example.com" required />
+                  <input 
+                    type="email" 
+                    id="email" 
+                    value={email} 
+                    className={readOnlyInputStyle} // Đã sửa
+                    readOnly 
+                  />
                 </div>
+                
+                {/* Trường Phone (người dùng nhập) */}
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gym-gray mb-1">Số điện thoại</label>
                   <input type="tel" id="phone" value={phone} onChange={e => setPhone(e.target.value)} className={inputStyle} placeholder="09xxxxxxxx" required />
                 </div>
                 
-                {/* SỬA LẠI FORM ĐỊA CHỈ */}
+                {/* Địa chỉ (người dùng nhập) */}
                 <div className="sm:col-span-2">
                   <label htmlFor="street" className="block text-sm font-medium text-gym-gray mb-1">Số nhà, Tên đường</label>
                   <input type="text" id="street" value={street} onChange={e => setStreet(e.target.value)} className={inputStyle} placeholder="123 Đường ABC" required />
@@ -123,13 +155,12 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onOrderSucces
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="city" className="block text-sm font-medium text-gym-gray mb-1">Tỉnh / Thành phố</label>
-
                   <input type="text" id="city" value={city} onChange={e => setCity(e.target.value)} className={inputStyle} placeholder="TP. Hồ Chí Minh" required />
                 </div>
               </div>
             </section>
 
-            {/* Payment Method */}
+            {/* Payment Method (Giữ nguyên) */}
             <section>
               <h2 className="text-2xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Phương thức thanh toán</h2>
               <div className="mt-4 space-y-3">
@@ -142,7 +173,6 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onOrderSucces
                   <span className="ml-4 text-white font-semibold">Thẻ Tín dụng/Ghi nợ</span>
                 </label>
 
-                {/* Conditional Credit Card Form */}
                 {paymentMethod === 'card' && (
                   <div className="bg-gym-dark p-4 rounded-lg border border-gym-yellow/50 mt-3 space-y-4 animate-fade-in">
                     <div>
@@ -169,7 +199,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onOrderSucces
             </section>
           </div>
 
-          {/* Right Column (Order Summary) - ĐÃ SỬA LỖI CRASH */}
+          {/* Right Column (Order Summary) - (Giữ nguyên) */}
           <div className="lg:col-span-1">
             <aside className="bg-gym-dark rounded-lg p-6 sticky top-24">
               <h2 className="text-2xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Tóm tắt đơn hàng</h2>
@@ -177,7 +207,6 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToShop, onOrderSucces
                 {cartItems.map(item => (
                   <li key={item.sku} className="flex items-center space-x-4">
                     <div className="relative">
-                      {/* Đã đổi từ item.images[0] thành item.image */}
                       <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
                       <span className="absolute -top-2 -right-2 bg-gym-yellow text-gym-darker text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{item.quantity}</span>
                     </div>

@@ -1,10 +1,10 @@
-// File: src/AdminPage.tsx (ĐÃ SỬA LỖI MAPPING HIỂN THỊ)
+// File: src/AdminPage.tsx (ĐÃ SỬA LỖI LOGIC OrderStatus ĐỂ KHỚP VỚI APP.TSX)
 import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { User, Theme, Product, Order, OrderStatus, CreateProductRequest } from '../types';
 import AddProductModal from './AddProductModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
-// SVG Icon Components (Giữ nguyên)
+// --- TẤT CẢ ICON SVG (GIỮ NGUYÊN) ---
 const PaletteIcon: React.FC<{className?: string}> = ({className}) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402a3.75 3.75 0 00-5.304-5.304L4.098 14.6c-1.464 1.464-1.464 3.84 0 5.304z" />
@@ -55,12 +55,12 @@ const HomeIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) =
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 21V12" />
     </svg>
 );
-
 const ChevronDownIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
     </svg>
 );
+// --- KẾT THÚC ICON SVG ---
 
 
 const navItems = [
@@ -81,14 +81,17 @@ interface AdminPageProps {
   onUpdateProduct: (productId: number, request: CreateProductRequest) => void;
   onDeleteProduct: (productId: number) => void;
   orders: Order[];
+  // SỬA: Hàm onUpdateOrderStatus giờ nhận trạng thái GỐC (BE status)
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
 }
 
+// === SỬA LỖI LOGIC HIỂN THỊ TỒN KHO ===
 const DashboardView: React.FC<{products: Product[]}> = ({products}) => (
     <>
         <header className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold">Bảng điều khiển</h1>
         </header>
+        {/* ... (Các thẻ doanh số giữ nguyên) ... */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm">
                 <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Doanh số theo thời gian</h3>
@@ -122,19 +125,25 @@ const DashboardView: React.FC<{products: Product[]}> = ({products}) => (
                   </tr>
                 </thead>
                 <tbody>
-                  {products.slice(0, 5).map((product) => (
-                    <tr key={product.id} className="border-b border-[var(--admin-border-color)] last:border-b-0">
-                      <td className="px-6 py-4 font-medium">{product.name}</td>
-                      <td className="px-6 py-4">{product.price.toLocaleString('vi-VN')}₫</td>
-                      <td className="px-6 py-4">{product.total || 0}</td>
-                    </tr>
-                  ))}
+                  {products.slice(0, 5).map((product) => {
+                    // SỬA: Tính tổng tồn kho từ variants, giống như ProductManagementView
+                    const totalStock = product.variants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0);
+                    return (
+                        <tr key={product.id} className="border-b border-[var(--admin-border-color)] last:border-b-0">
+                          <td className="px-6 py-4 font-medium">{product.name}</td>
+                          <td className="px-6 py-4">{product.price.toLocaleString('vi-VN')}₫</td>
+                          {/* SỬA: Hiển thị totalStock đã tính toán */}
+                          <td className="px-6 py-4">{totalStock}</td>
+                        </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           </div>
     </>
 );
+// === KẾT THÚC SỬA DASHBOARDVIEW ===
 
 // ProductManagementView giữ nguyên
 const ProductManagementView: React.FC<{
@@ -315,16 +324,40 @@ const ProductManagementView: React.FC<{
     );
 };
 
-// --- LOGIC CHUYỂN ĐỔI CỤC BỘ CHO ADMINPAGE.TSX ---
 
-// (!!! ĐÃ XÓA HÀM `mapBackendStatusToVN` VÌ NÓ GÂY LỖI DOUBLE-MAPPING !!!)
+// ==========================================================
+// === SỬA LỖI LOGIC: Thêm bộ chuyển đổi BE <-> VN ===
+// ==========================================================
 
-// Map Tiếng Việt hiển thị sang Enum Tiếng Anh (Chỉ để tham khảo, không dùng trong onChange)
-const VN_TO_BE_STATUS_MAP: Record<string, string> = {
-    'Đang xử lý': 'PENDING_CONFIRMATION', 
-    'Đã giao hàng': 'COMPLETED',
-    'Đã hủy': 'CANCELLED',
+// Map Backend -> Tiếng Việt (Để HIỂN THỊ trong UI)
+const BE_TO_VN_MAP: Record<OrderStatus, string> = {
+    'PENDING_CONFIRMATION': 'Chờ xác nhận',
+    'PROCESSING': 'Đang xử lý',
+    'SHIPPING': 'Đang giao hàng',
+    'COMPLETED': 'Hoàn thành',
+    'CANCELLED': 'Đã hủy',
+    'RETURNED': 'Đã trả hàng',
 };
+
+// Map Tiếng Việt -> Backend (Để GỬI ĐI khi admin chọn)
+const VN_TO_BE_MAP: Record<string, OrderStatus> = {
+    'Chờ xác nhận': 'PENDING_CONFIRMATION',
+    'Đang xử lý': 'PROCESSING',
+    'Đang giao hàng': 'SHIPPING',
+    'Hoàn thành': 'COMPLETED',
+    'Đã hủy': 'CANCELLED',
+    'Đã trả hàng': 'RETURNED',
+};
+
+// Các trạng thái Tiếng Việt để admin chọn (sắp xếp theo ý muốn)
+const VN_STATUSES_FOR_UI = [
+    'Chờ xác nhận',
+    'Đang xử lý',
+    'Đang giao hàng',
+    'Hoàn thành',
+    'Đã hủy',
+    'Đã trả hàng',
+];
 // --- KẾT THÚC LOGIC CHUYỂN ĐỔI ---
 
 
@@ -340,18 +373,21 @@ const OrderManagementView: React.FC<{
 
     const inputStyles = "bg-[var(--admin-bg-card)] border border-[var(--admin-border-color)] rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 ring-[var(--admin-text-accent)]";
 
-    // Đảm bảo orderStatuses chỉ là Tiếng Việt để hiển thị trong dropdown
-    const orderStatuses: OrderStatus[] = ['Đang xử lý', 'Đã giao hàng', 'Đã hủy'];
+    // SỬA: Đã xóa 'orderStatuses' cũ, giờ dùng 'VN_STATUSES_FOR_UI'
 
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
+            
             // ==================================
             // === SỬA LỖI LOGIC FILTER Ở ĐÂY ===
             // ==================================
-            // order.status đã là Tiếng Việt (vd: "Đã hủy")
-            const vnStatus = order.status; 
+            // 1. Lấy trạng thái GỐC (BE status) từ order
+            const beStatus = order.status; 
+            // 2. Chuyển nó sang Tiếng Việt (VN status) để so sánh
+            const vnStatus = BE_TO_VN_MAP[beStatus] || 'Không rõ';
             // ==================================
             
+            // 3. So sánh VN status với statusFilter (cũng là Tiếng Việt)
             const matchesStatus = statusFilter === 'Tất cả' || vnStatus === statusFilter;
             const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
                                   order.customer.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -359,11 +395,15 @@ const OrderManagementView: React.FC<{
         });
     }, [orders, searchTerm, statusFilter]);
 
+    // SỬA: Hàm này giờ nhận trạng thái GỐC (BE Status)
     const getStatusClass = (status: OrderStatus) => {
         switch (status) {
-          case 'Đã giao hàng': return 'bg-green-500/20 text-green-400';
-          case 'Đang xử lý': return 'bg-yellow-500/20 text-yellow-400';
-          case 'Đã hủy': return 'bg-red-500/20 text-red-400';
+          case 'COMPLETED': return 'bg-green-500/20 text-green-400';
+          case 'SHIPPING': return 'bg-blue-500/20 text-blue-400';
+          case 'PROCESSING': return 'bg-yellow-500/20 text-yellow-400';
+          case 'PENDING_CONFIRMATION': return 'bg-gray-500/20 text-gray-400';
+          case 'CANCELLED': return 'bg-red-500/20 text-red-400';
+          case 'RETURNED': return 'bg-red-500/20 text-red-400';
           default: return 'bg-gray-500/20 text-gray-400';
         }
     };
@@ -392,7 +432,8 @@ const OrderManagementView: React.FC<{
                             type="text" 
                             placeholder="Tìm theo Mã đơn hàng hoặc Tên..." 
                             value={searchTerm}
-                            onChange={e => setSearchTerm(e.g.value)}
+                            // SỬA LỖI TYPO: e.g.value -> e.target.value
+                            onChange={e => setSearchTerm(e.target.value)} 
                             className={`${inputStyles} w-full pl-10`} 
                         />
                     </div>
@@ -403,7 +444,8 @@ const OrderManagementView: React.FC<{
                             className={`${inputStyles} w-full`}
                         >
                             <option value="Tất cả">Tất cả trạng thái</option>
-                            {orderStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+                            {/* SỬA: Dùng VN_STATUSES_FOR_UI để tạo options */}
+                            {VN_STATUSES_FOR_UI.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
                 </div>
@@ -430,8 +472,10 @@ const OrderManagementView: React.FC<{
                         // ==================================
                         // === SỬA LỖI LOGIC HIỂN THỊ Ở ĐÂY ===
                         // ==================================
-                        // order.status đã là Tiếng Việt (vd: "Đã hủy")
-                        const currentVNStatus = order.status; 
+                        // 1. Lấy trạng thái GỐC (BE status)
+                        const currentBeStatus = order.status; 
+                        // 2. Chuyển sang Tiếng Việt (VN status) để hiển thị
+                        const currentVnStatus = BE_TO_VN_MAP[currentBeStatus] || 'Không rõ';
                         // ==================================
 
                         return (
@@ -458,21 +502,28 @@ const OrderManagementView: React.FC<{
                               <td className={`px-6 py-4 font-semibold ${getPaymentStatusClass(order.paymentStatus)}`}>{order.paymentStatus}</td>
                               <td className="px-6 py-4">
                                 <select 
-                                    // Dùng thẳng giá trị Tiếng Việt (currentVNStatus)
-                                    value={currentVNStatus} 
+                                    // SỬA: Hiển thị giá trị Tiếng Việt (currentVnStatus)
+                                    value={currentVnStatus} 
                                     
-                                    // Logic onChange (gửi đi Tiếng Việt) đã đúng từ lần trước
                                     onChange={(e) => {
-                                        const vnValue = e.target.value as OrderStatus;
-                                        console.log(`[STATUS_UPDATE] Gửi ID: ${order.id}, Trạng thái VN: ${vnValue}`);
-                                        onUpdateStatus(order.id, vnValue);
+                                        // 1. Lấy giá trị Tiếng Việt từ dropdown
+                                        const vnValue = e.target.value;
+                                        // 2. Chuyển sang trạng thái GỐC (BE status)
+                                        const beStatusToSend = VN_TO_BE_MAP[vnValue];
+                                        
+                                        if (beStatusToSend) {
+                                            console.log(`[STATUS_UPDATE] Gửi ID: ${order.id}, Trạng thái BE: ${beStatusToSend}`);
+                                            // 3. Gửi trạng thái GỐC đi
+                                            onUpdateStatus(order.id, beStatusToSend);
+                                        }
                                     }}
                                     
-                                    // Dùng trạng thái Tiếng Việt để lấy class CSS
-                                    className={`text-xs font-semibold rounded-md p-1.5 border-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--admin-bg-card)] focus:ring-[var(--admin-text-accent)] ${getStatusClass(currentVNStatus)}`}
+                                    // SỬA: Dùng trạng thái GỐC (currentBeStatus) để lấy class CSS
+                                    className={`text-xs font-semibold rounded-md p-1.5 border-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--admin-bg-card)] focus:ring-[var(--admin-text-accent)] ${getStatusClass(currentBeStatus)}`}
                                     style={{ backgroundColor: 'transparent' }}
                                 >
-                                  {orderStatuses.map(s => <option key={s} value={s} className="bg-[var(--admin-bg-card)] text-[var(--admin-text-main)]">{s}</option>)}
+                                  {/* SỬA: Dùng VN_STATUSES_FOR_UI để tạo options */}
+                                  {VN_STATUSES_FOR_UI.map(s => <option key={s} value={s} className="bg-[var(--admin-bg-card)] text-[var(--admin-text-main)]">{s}</option>)}
                                 </select>
                               </td>
                             </tr>
@@ -552,6 +603,8 @@ const OrderManagementView: React.FC<{
         </>
     );
 };
+// === KẾT THÚC SỬA ORDERMANAGEMENTVIEW ===
+
 
 const ComingSoonPage: React.FC<{ title: string }> = ({ title }) => (
     <>

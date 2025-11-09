@@ -1,4 +1,4 @@
-// File: src/App.tsx (Đã SỬA LỖI Typo </main> main>)
+// File: src/App.tsx (Đã SỬA LỖI Typo </main> main> và logic OrderStatus)
 
 import React, { useState, useCallback, useEffect } from 'react';
 import api from './lib/axios';
@@ -9,7 +9,7 @@ import {
     Theme, 
     User, 
     Order, 
-    OrderStatus, 
+    OrderStatus, // <-- ĐÃ SỬA (import type mới)
     CartItem, 
     UserResponse , 
     CreateProductRequest,
@@ -33,7 +33,7 @@ import BrandsPage from './components/BrandsPage';
 import { brands } from './constants';
 import AdminPage from './components/AdminPage';
 import AccountPage from './components/AccountPage';
-import OrderHistoryPage from './components/OrderHistoryPage';
+import OrderHistoryPage from './components/OrderHistoryPage'; // <-- Sẽ dùng component mới
 
 // [ƯU TIÊN FILE 2] Sử dụng logic map mới nhất từ App.tsx
 const parseVariantName = (name: string): { flavor: string, size: string } => {
@@ -100,13 +100,9 @@ const mapProductResponseToProduct = (res: any): Product => {
 // *** ĐÃ SỬA LỖI MAPPING ĐƠN HÀNG ĐỂ CÓ THÊM size, flavor, và productName ***
 const mapBackendOrderToFrontendOrder = (beOrder: any): Order => {
   
-  const mapStatus = (status: string): OrderStatus => {
-    // SỬA LỖI MAP TỪ BACKEND: Dùng 'COMPLETED' thay vì 'DELIVERED'
-    if (status === 'PENDING_CONFIRMATION' || status === 'PROCESSING' || status === 'SHIPPING') return 'Đang xử lý';
-    if (status === 'COMPLETED') return 'Đã giao hàng'; // <-- SỬA Ở ĐÂY
-    if (status === 'CANCELLED' || status === 'RETURNED') return 'Đã hủy';
-    return 'Đang xử lý'; // Mặc định
-  };
+  // === SỬA LỖI: Xóa hàm mapStatus cũ ===
+  // const mapStatus = (status: string): OrderStatus => { ... }
+  // === KẾT THÚC XÓA ===
 
   const mapPaymentStatus = (status: string): PaymentStatus => {
     if (status === 'PAID') return 'Đã thanh toán';
@@ -136,7 +132,11 @@ const mapBackendOrderToFrontendOrder = (beOrder: any): Order => {
   return {
     id: String(beOrder.orderId), 
     date: new Date(beOrder.createdAt).toLocaleString('vi-VN'),
-    status: mapStatus(beOrder.status), // status này đã được hàm mapStatus xử lý
+    
+    // === SỬA LỖI: Lưu trạng thái GỐC từ backend ===
+    status: beOrder.status as OrderStatus, // <-- SỬA Ở ĐÂY
+    // =============================================
+
     total: beOrder.totalAmount,
     items: mapItems(beOrder.orderDetails || []),
     customer: {
@@ -154,27 +154,9 @@ const mapBackendOrderToFrontendOrder = (beOrder: any): Order => {
 
 type Page = 'home' | 'product' | 'category' | 'checkout' | 'brands' | 'account' | 'order-history';
 
-// *** HÀM CHUYỂN ĐỔI TỪ TIẾNG VIỆT SANG TIẾNG ANH CHO BACKEND ***
-const mapVietnameseStatusToBackend = (vnStatus: OrderStatus): string => {
-  switch (vnStatus) {
-    case 'Đang xử lý':
-      // Bạn có thể chọn PENDING_CONFIRMATION hoặc PROCESSING tùy logic
-      return 'PENDING_CONFIRMATION'; 
-    
-    // ==================================
-    // === SỬA LỖI LOGIC ENUM Ở ĐÂY ===
-    // ==================================
-    case 'Đã giao hàng':
-      return 'COMPLETED'; // <-- SỬA TỪ 'DELIVERED'
-    // ==================================
-    
-    case 'Đã hủy':
-      return 'CANCELLED';
-    default:
-      return 'PENDING_CONFIRMATION'; 
-  }
-};
-// *** KẾT THÚC HÀM CHUYỂN ĐỔI ***
+// === SỬA LỖI: Xóa hàm mapVietnameseStatusToBackend ===
+// const mapVietnameseStatusToBackend = (vnStatus: OrderStatus): string => { ... }
+// === KẾT THÚC XÓA ===
 
 
 const App: React.FC = () => {
@@ -333,8 +315,13 @@ const App: React.FC = () => {
   }, [fetchProducts, fetchOrders, currentUser]); 
 
 
-  // *** ĐÃ SỬA LỖI: Áp dụng mapVietnameseStatusToBackend (đã sửa) ***
-  const handleUpdateOrderStatus = useCallback(async (orderId: string, status: OrderStatus) => {
+  // *** SỬA LỖI LOGIC: Hàm này giờ nhận TRẠNG THÁI GỐC (cho Admin)
+  // *** hoặc một string đặc biệt 'CANCEL_USER' (cho User)
+  const handleUpdateOrderStatus = useCallback(async (
+      orderId: string, 
+      action: OrderStatus | 'CANCEL_USER' // Nhận 1 trong 2
+    ) => {
+      
     if (!currentUser) {
         alert('Vui lòng đăng nhập lại để thực hiện.');
         return;
@@ -343,16 +330,14 @@ const App: React.FC = () => {
     try {
         const orderIdNum = parseInt(orderId.replace(/[^0-9]/g, ''));
         
-        // CHUYỂN ĐỔI TỪ TIẾNG VIỆT SANG TIẾNG ANH (Enum Java)
-        // Hàm này giờ đã map "Đã giao hàng" -> "COMPLETED"
-        const backendStatus = mapVietnameseStatusToBackend(status); // <--- ĐÃ SỬA
-
-        if (currentUser.role === 'ADMIN') {
-            await api.put(`/orders/admin/${orderIdNum}/status`, { 
-                newStatus: backendStatus // <--- ĐÃ SỬA
+        if (currentUser.role === 'ADMIN' && action !== 'CANCEL_USER') {
+            // Admin đang cập nhật trạng thái (gửi trạng thái gốc)
+             await api.put(`/orders/admin/${orderIdNum}/status`, { 
+                newStatus: action // Gửi thẳng trạng thái gốc
             });
         
-        } else if (status === 'Đã hủy') {
+        } else if (currentUser.role === 'USER' && action === 'CANCEL_USER') {
+            // User đang nhấn nút "Hủy đơn"
             await api.put(`/orders/${orderIdNum}/cancel`);
         } else {
             alert('Không có quyền thay đổi trạng thái này.');
@@ -360,7 +345,7 @@ const App: React.FC = () => {
         }
 
         await fetchOrders(currentUser.role);
-        alert(`Cập nhật trạng thái đơn hàng ${orderId} thành công!`); 
+        alert(`Cập nhật đơn hàng ${orderId} thành công!`); 
 
     } catch (err: any) {
         console.error("Lỗi Cập nhật trạng thái đơn hàng:", err);
@@ -474,7 +459,8 @@ const App: React.FC = () => {
       case 'checkout':
         return <CheckoutPage 
                   onBackToShop={handleGoHome} 
-                  onOrderSuccess={handleOrderSuccess} // Dùng onOrderSuccess
+                  onOrderSuccess={handleOrderSuccess} 
+                  currentUser={currentUser}// Dùng onOrderSuccess
                 />;
 
       case 'brands':
@@ -483,7 +469,12 @@ const App: React.FC = () => {
         return <AccountPage currentUser={currentUser!} onBack={handleGoHome} />;
       
       case 'order-history':
-        return <OrderHistoryPage onBack={handleGoHome} orders={orders} />;
+        // === SỬA: Truyền hàm onUpdateOrderStatus vào component ===
+        return <OrderHistoryPage 
+                  onBack={handleGoHome} 
+                  orders={orders} 
+                  onUpdateOrderStatus={handleUpdateOrderStatus} // <-- ĐÃ THÊM
+                />;
       
       case 'home':
       default:

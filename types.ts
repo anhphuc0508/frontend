@@ -1,4 +1,4 @@
-// File: types.ts (Đã cập nhật ProductVariantRequest và CartItem)
+// File: types.ts (Đã cập nhật OrderStatus)
 // FIX: Removed self-referential import of Product type.
 
 export interface ProductVariant {
@@ -100,13 +100,20 @@ export interface User {
   role: 'USER' | 'ADMIN';
 }
 
-export type OrderStatus = 'Đã giao hàng' | 'Đang xử lý' | 'Đã hủy';
+// ==========================================================
+// === SỬA LỖI QUAN TRỌNG: Dùng trạng thái gốc từ Backend ===
+// (Thay vì 'Đã giao hàng' | 'Đang xử lý' | 'Đã hủy')
+// ==========================================================
+export type OrderStatus = 'PENDING_CONFIRMATION' | 'PROCESSING' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED' | 'RETURNED';
+// ==========================================================
+
+
 export type PaymentStatus = 'Chưa thanh toán' | 'Đã thanh toán';
 
 export interface Order {
   id: string;
   date: string;
-  status: OrderStatus;
+  status: OrderStatus; // <-- ĐÃ SỬA: Giờ đây là trạng thái gốc (bắt buộc cho stepper)
   total: number;
   items: CartItem[]; // Giờ đây 'items' là một mảng CartItem đã sửa
   customer: {
