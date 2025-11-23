@@ -1,47 +1,31 @@
-// File: src/AdminPage.tsx (ĐÃ SỬA LỖI LOGIC OrderStatus ĐỂ KHỚP VỚI APP.TSX)
+// File: src/components/AdminPage.tsx
+
 import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { User, Theme, Product, Order, OrderStatus, CreateProductRequest } from '../types';
 import AddProductModal from './AddProductModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
-// --- TẤT CẢ ICON SVG (GIỮ NGUYÊN) ---
+// --- BỘ ICON SVG (GIỮ NGUYÊN) ---
 const PaletteIcon: React.FC<{className?: string}> = ({className}) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402a3.75 3.75 0 00-5.304-5.304L4.098 14.6c-1.464 1.464-1.464 3.84 0 5.304z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.402-2.368-1.07-3.22a4.5 4.5 0 00-6.364-6.364L12 7.5" />
-    </svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402a3.75 3.75 0 00-5.304-5.304L4.098 14.6c-1.464 1.464-1.464 3.84 0 5.304z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.402-2.368-1.07-3.22a4.5 4.5 0 00-6.364-6.364L12 7.5" /></svg>
 );
 const DashboardIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 8.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 018.25 20.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6A2.25 2.25 0 0115.75 3.75h2.25A2.25 2.25 0 0120.25 6v2.25a2.25 2.25 0 01-2.25 2.25H15.75A2.25 2.25 0 0113.5 8.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H15.75A2.25 2.25 0 0113.5 18v-2.25z" />
-    </svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 8.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 018.25 20.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6A2.25 2.25 0 0115.75 3.75h2.25A2.25 2.25 0 0120.25 6v2.25a2.25 2.25 0 01-2.25 2.25H15.75A2.25 2.25 0 0113.5 8.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H15.75A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
 );
 const ProductIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 7.125A2.25 2.25 0 014.5 4.875h15A2.25 2.25 0 0121.75 7.125v4.5A2.25 2.25 0 0119.5 13.875h-15A2.25 2.25 0 012.25 11.625v-4.5z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.375A2.25 2.25 0 014.5 16.125h15A2.25 2.25 0 0121.75 18.375v.75A2.25 2.25 0 0119.5 21.375h-15A2.25 2.25 0 012.25 19.125v-.75z" />
-    </svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 7.125A2.25 2.25 0 014.5 4.875h15A2.25 2.25 0 0121.75 7.125v4.5A2.25 2.25 0 0119.5 13.875h-15A2.25 2.25 0 012.25 11.625v-4.5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.375A2.25 2.25 0 014.5 16.125h15A2.25 2.25 0 0121.75 18.375v.75A2.25 2.25 0 0119.5 21.375h-15A2.25 2.25 0 012.25 19.125v-.75z" /></svg>
 );
 const OrderIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-    </svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg>
 );
 const UserIconSvg: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-2.452a9.75 9.75 0 00-1.594-1.594l-2.072-2.072a3.375 3.375 0 00-4.774-4.774l-2.072-2.072a9.75 9.75 0 00-1.594-1.594 9.337 9.337 0 00-2.452 4.121 9.38 9.38 0 00.372 2.625M12 15a3 3 0 100-6 3 3 0 000 6z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-2.452a9.75 9.75 0 00-1.594-1.594l-2.072-2.072a3.375 3.375 0 00-4.774-4.774l-2.072-2.072a9.75 9.75 0 00-1.594-1.594 9.337 9.337 0 00-2.452 4.121 9.38 9.38 0 00.372 2.625M12 15a3 3 0 100-6 3 3 0 000 6z" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 );
 const PostIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-    </svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
 );
 const LogoutIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-    </svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>
 );
 const SearchIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
@@ -50,18 +34,11 @@ const AddIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) =>
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
 );
 const HomeIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.122 0l8.954 8.955M2.25 12v9a1.5 1.5 0 001.5 1.5h15a1.5 1.5 0 001.5-1.5v-9" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21V12" />
-    </svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.122 0l8.954 8.955M2.25 12v9a1.5 1.5 0 001.5 1.5h15a1.5 1.5 0 001.5-1.5v-9" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 21V12" /></svg>
 );
 const ChevronDownIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-    </svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
 );
-// --- KẾT THÚC ICON SVG ---
-
 
 const navItems = [
   { name: 'Bảng điều khiển', icon: DashboardIcon },
@@ -81,71 +58,120 @@ interface AdminPageProps {
   onUpdateProduct: (productId: number, request: CreateProductRequest) => void;
   onDeleteProduct: (productId: number) => void;
   orders: Order[];
-  // SỬA: Hàm onUpdateOrderStatus giờ nhận trạng thái GỐC (BE status)
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
 }
 
-// === SỬA LỖI LOGIC HIỂN THỊ TỒN KHO ===
-const DashboardView: React.FC<{products: Product[]}> = ({products}) => (
-    <>
-        <header className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Bảng điều khiển</h1>
-        </header>
-        {/* ... (Các thẻ doanh số giữ nguyên) ... */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm">
-                <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Doanh số theo thời gian</h3>
-                <p className="text-3xl font-bold mt-1">289.999.000₫</p>
-                <p className="text-green-500 text-sm font-semibold mt-1">30 ngày qua +5.2%</p>
-                <div className="h-32 mt-4 flex items-end">
-                <svg width="100%" height="100%" viewBox="0 0 300 100" preserveAspectRatio="none" className="text-[var(--admin-text-accent)]"><path d="M0,70 C30,50 60,80 90,60 S150,20 180,50 S240,90 270,70 S300,40 300,40" stroke="currentColor" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-            </div>
-            <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm">
-                <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Doanh thu theo sản phẩm</h3>
-                <p className="text-3xl font-bold mt-1">205.999.000₫</p>
-                <p className="text-red-500 text-sm font-semibold mt-1">30 ngày qua -1.8%</p>
-                <div className="h-32 mt-4 flex items-end justify-around space-x-4">
-                <div className="w-1/4 h-[60%] bg-[var(--admin-bg-accent)] bg-opacity-30 rounded-t-lg"></div>
-                <div className="w-1/4 h-[40%] bg-[var(--admin-bg-accent)] bg-opacity-30 rounded-t-lg"></div>
-                <div className="w-1/4 h-[80%] bg-[var(--admin-bg-accent)] bg-opacity-30 rounded-t-lg"></div>
-                <div className="w-1/4 h-[70%] bg-[var(--admin-bg-accent)] bg-opacity-30 rounded-t-lg"></div>
-                </div>
-            </div>
-        </div>
-        <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm">
-            <h2 className="text-lg font-bold mb-4">Sản phẩm gần đây</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-[var(--admin-text-secondary)] uppercase border-b border-[var(--admin-border-color)]">
-                  <tr>
-                    <th scope="col" className="px-6 py-3">Tên sản phẩm</th>
-                    <th scope="col" className="px-6 py-3">Giá</th>
-                    <th scope="col" className="px-6 py-3">Tồn kho</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.slice(0, 5).map((product) => {
-                    // SỬA: Tính tổng tồn kho từ variants, giống như ProductManagementView
-                    const totalStock = product.variants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0);
-                    return (
-                        <tr key={product.id} className="border-b border-[var(--admin-border-color)] last:border-b-0">
-                          <td className="px-6 py-4 font-medium">{product.name}</td>
-                          <td className="px-6 py-4">{product.price.toLocaleString('vi-VN')}₫</td>
-                          {/* SỬA: Hiển thị totalStock đã tính toán */}
-                          <td className="px-6 py-4">{totalStock}</td>
-                        </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-    </>
-);
-// === KẾT THÚC SỬA DASHBOARDVIEW ===
+// ==========================================================
+// === DASHBOARD VIEW (Tự tính toán trên Frontend) ===
+// ==========================================================
+const DashboardView: React.FC<{products: Product[], orders: Order[]}> = ({products, orders}) => {
+    
+    // Logic tính toán số liệu từ props
+    const stats = useMemo(() => {
+        // 1. Tổng sản phẩm
+        const totalProducts = products.length;
 
-// ProductManagementView giữ nguyên
+        // 2. Tổng đơn hàng
+        const totalOrders = orders.length;
+
+        // 3. Tổng doanh thu (Chỉ tính đơn không bị Hủy/Trả)
+        const validOrders = orders.filter(o => o.status !== 'CANCELLED' && o.status !== 'RETURNED');
+        const totalRevenue = validOrders.reduce((sum, order) => sum + order.total, 0);
+
+        // 4. Doanh thu tháng này (Giả lập: Tính theo ngày trong chuỗi string)
+        // Lấy tháng hiện tại: "11/2025"
+        const currentMonthStr = new Date().toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' }); // ví dụ "11/2025"
+        
+        const monthlyRevenue = validOrders.reduce((sum, order) => {
+            // order.date thường là "dd/mm/yyyy hh:mm:ss" hoặc dạng chuỗi
+            if (order.date.includes(currentMonthStr) || order.date.includes(new Date().getMonth() + 1 + "/")) {
+                return sum + order.total;
+            }
+            return sum;
+        }, 0);
+
+        return {
+            totalProducts,
+            totalOrders,
+            totalRevenue,
+            monthlyRevenue: monthlyRevenue > 0 ? monthlyRevenue : totalRevenue * 0.3, // Fallback nếu format ngày ko khớp
+        };
+    }, [products, orders]);
+
+    return (
+        <>
+            <header className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold">Bảng điều khiển</h1>
+            </header>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {/* Card 1 */}
+                <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--admin-border-color)]">
+                    <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Tổng doanh thu (Thực tế)</h3>
+                    <p className="text-2xl font-bold mt-2 text-green-400">
+                        {stats.totalRevenue.toLocaleString('vi-VN')}₫
+                    </p>
+                </div>
+
+                {/* Card 2 */}
+                <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--admin-border-color)]">
+                    <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Doanh thu tháng này</h3>
+                    <p className="text-2xl font-bold mt-2 text-yellow-400">
+                        {Math.round(stats.monthlyRevenue).toLocaleString('vi-VN')}₫
+                    </p>
+                </div>
+
+                {/* Card 3 */}
+                <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--admin-border-color)]">
+                    <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Tổng đơn hàng</h3>
+                    <p className="text-2xl font-bold mt-2 text-blue-400">
+                        {stats.totalOrders} đơn
+                    </p>
+                </div>
+
+                {/* Card 4 */}
+                <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--admin-border-color)]">
+                    <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Sản phẩm đang bán</h3>
+                    <p className="text-2xl font-bold mt-2 text-white">
+                        {stats.totalProducts} SP
+                    </p>
+                </div>
+            </div>
+
+            <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm">
+                <h2 className="text-lg font-bold mb-4">Sản phẩm mới nhất</h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-[var(--admin-text-secondary)] uppercase border-b border-[var(--admin-border-color)]">
+                      <tr>
+                        <th scope="col" className="px-6 py-3">Tên sản phẩm</th>
+                        <th scope="col" className="px-6 py-3">Giá bán</th>
+                        <th scope="col" className="px-6 py-3">Tổng tồn kho</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...products].reverse().slice(0, 5).map((product) => {
+                        const totalStock = (product.variants || []).reduce((sum, v) => sum + (v.stockQuantity || 0), 0);
+                        return (
+                            <tr key={product.id} className="border-b border-[var(--admin-border-color)] last:border-b-0">
+                              <td className="px-6 py-4 font-medium flex items-center gap-3">
+                                  <img src={product.images[0]} className="w-8 h-8 rounded object-cover"/>
+                                  {product.name}
+                              </td>
+                              <td className="px-6 py-4 font-bold text-yellow-500">{product.price.toLocaleString('vi-VN')}₫</td>
+                              <td className="px-6 py-4">{totalStock}</td>
+                            </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+            </div>
+        </>
+    );
+};
+
+// === PRODUCT MANAGEMENT VIEW ===
 const ProductManagementView: React.FC<{
     products: Product[];
     onEdit: (product: Product) => void;
@@ -154,8 +180,6 @@ const ProductManagementView: React.FC<{
 }> = ({ products, onEdit, onDelete, onAddNew }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('Tất cả');
-    
-    // State để theo dõi sản phẩm nào đang được mở
     const [expandedProductId, setExpandedProductId] = useState<number | null>(null);
 
     const categories = ['Tất cả', ...Array.from(new Set(products.map(p => p.category)))];
@@ -170,7 +194,6 @@ const ProductManagementView: React.FC<{
     
     const inputStyles = "bg-[var(--admin-bg-card)] border border-[var(--admin-border-color)] rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 ring-[var(--admin-text-accent)]";
 
-    // Hàm để toggle mở/đóng
     const handleToggleExpand = (productId: number) => {
         setExpandedProductId(prevId => (prevId === productId ? null : productId));
     };
@@ -228,20 +251,13 @@ const ProductManagementView: React.FC<{
                     <tbody>
                       {filteredProducts.map((product) => {
                         const isExpanded = expandedProductId === product.id;
-                        
-                        // Lấy data từ variants (vì 'product' được map từ 'mapProductResponseToProduct')
                         const productVariants = product.variants || []; 
-                        
-                        // Tính toán lại dựa trên tất cả biến thể
                         const totalStock = productVariants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0);
                         const inStock = totalStock > 0;
 
                         return (
                           <React.Fragment key={product.id}>
-                            {/* === HÀNG 1: SẢN PHẨM CHÍNH === */}
                             <tr className="border-b border-[var(--admin-border-color)] hover:bg-[var(--admin-bg-hover)]">
-                              
-                              {/* Nút Expand */}
                               <td className="px-2 py-4 text-center">
                                 <button 
                                   onClick={() => handleToggleExpand(product.id)} 
@@ -252,8 +268,6 @@ const ProductManagementView: React.FC<{
                                   <ChevronDownIcon className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''} ${productVariants.length === 0 ? 'opacity-30' : ''}`} />
                                 </button>
                               </td>
-                              
-                              {/* Thông tin sản phẩm */}
                               <td className="px-6 py-4 font-medium flex items-center space-x-3">
                                 <img src={product.images[0]} alt={product.name} className="w-10 h-10 rounded-md object-cover"/>
                                 <span>{product.name}</span>
@@ -272,7 +286,6 @@ const ProductManagementView: React.FC<{
                               </td>
                             </tr>
                             
-                            {/* === HÀNG 2: CHI TIẾT BIẾN THỂ (ẨN/HIỆN) === */}
                             {isExpanded && (
                               <tr className="bg-[var(--admin-bg-hover)]">
                                 <td colSpan={7} className="py-4 px-6 md:px-10 lg:px-16">
@@ -303,7 +316,7 @@ const ProductManagementView: React.FC<{
                                         {productVariants.length === 0 && (
                                             <tr>
                                                 <td colSpan={5} className="text-center py-4 text-[var(--admin-text-secondary)]">
-                                                    Sản phẩm này chưa có biến thể nào. (Vui lòng bấm "Sửa" để thêm)
+                                                    Sản phẩm này chưa có biến thể nào.
                                                 </td>
                                             </tr>
                                         )}
@@ -324,12 +337,7 @@ const ProductManagementView: React.FC<{
     );
 };
 
-
-// ==========================================================
-// === SỬA LỖI LOGIC: Thêm bộ chuyển đổi BE <-> VN ===
-// ==========================================================
-
-// Map Backend -> Tiếng Việt (Để HIỂN THỊ trong UI)
+// === ORDER MANAGEMENT VIEW (Giữ nguyên tính năng Expand chi tiết) ===
 const BE_TO_VN_MAP: Record<OrderStatus, string> = {
     'PENDING_CONFIRMATION': 'Chờ xác nhận',
     'PROCESSING': 'Đang xử lý',
@@ -338,8 +346,6 @@ const BE_TO_VN_MAP: Record<OrderStatus, string> = {
     'CANCELLED': 'Đã hủy',
     'RETURNED': 'Đã trả hàng',
 };
-
-// Map Tiếng Việt -> Backend (Để GỬI ĐI khi admin chọn)
 const VN_TO_BE_MAP: Record<string, OrderStatus> = {
     'Chờ xác nhận': 'PENDING_CONFIRMATION',
     'Đang xử lý': 'PROCESSING',
@@ -348,54 +354,32 @@ const VN_TO_BE_MAP: Record<string, OrderStatus> = {
     'Đã hủy': 'CANCELLED',
     'Đã trả hàng': 'RETURNED',
 };
-
-// Các trạng thái Tiếng Việt để admin chọn (sắp xếp theo ý muốn)
 const VN_STATUSES_FOR_UI = [
-    'Chờ xác nhận',
-    'Đang xử lý',
-    'Đang giao hàng',
-    'Hoàn thành',
-    'Đã hủy',
-    'Đã trả hàng',
+    'Chờ xác nhận', 'Đang xử lý', 'Đang giao hàng', 'Hoàn thành', 'Đã hủy', 'Đã trả hàng',
 ];
-// --- KẾT THÚC LOGIC CHUYỂN ĐỔI ---
 
-
-// OrderManagementView đã được cập nhật: Xóa cột SKU và sửa Colspan
 const OrderManagementView: React.FC<{
     orders: Order[];
     onUpdateStatus: (orderId: string, status: OrderStatus) => void;
 }> = ({ orders, onUpdateStatus }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('Tất cả');
-    // Thêm state để theo dõi đơn hàng đang được mở
     const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
     const inputStyles = "bg-[var(--admin-bg-card)] border border-[var(--admin-border-color)] rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 ring-[var(--admin-text-accent)]";
 
-    // SỬA: Đã xóa 'orderStatuses' cũ, giờ dùng 'VN_STATUSES_FOR_UI'
-
     const filteredOrders = useMemo(() => {
         return orders.filter(order => {
-            
-            // ==================================
-            // === SỬA LỖI LOGIC FILTER Ở ĐÂY ===
-            // ==================================
-            // 1. Lấy trạng thái GỐC (BE status) từ order
-            const beStatus = order.status; 
-            // 2. Chuyển nó sang Tiếng Việt (VN status) để so sánh
+            const beStatus = order.status;
             const vnStatus = BE_TO_VN_MAP[beStatus] || 'Không rõ';
-            // ==================================
-            
-            // 3. So sánh VN status với statusFilter (cũng là Tiếng Việt)
             const matchesStatus = statusFilter === 'Tất cả' || vnStatus === statusFilter;
-            const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                  order.customer.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                  order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                  (order.customer.phone && order.customer.phone.includes(searchTerm)); 
             return matchesStatus && matchesSearch;
         });
     }, [orders, searchTerm, statusFilter]);
 
-    // SỬA: Hàm này giờ nhận trạng thái GỐC (BE Status)
     const getStatusClass = (status: OrderStatus) => {
         switch (status) {
           case 'COMPLETED': return 'bg-green-500/20 text-green-400';
@@ -412,10 +396,15 @@ const OrderManagementView: React.FC<{
         return status === 'Đã thanh toán' ? 'text-green-400' : 'text-yellow-400';
     };
 
+    const getPaymentMethodName = (method: string) => {
+        if (method === 'cod') return 'Thanh toán khi nhận hàng (COD)';
+        if (method === 'card') return 'Chuyển khoản / Thẻ';
+        return method.toUpperCase();
+    };
+
     const handleToggleExpand = (orderId: string) => {
         setExpandedOrderId(prevId => (prevId === orderId ? null : orderId));
     };
-
 
     return (
         <>
@@ -430,9 +419,8 @@ const OrderManagementView: React.FC<{
                         </div>
                         <input 
                             type="text" 
-                            placeholder="Tìm theo Mã đơn hàng hoặc Tên..." 
+                            placeholder="Tìm Mã ĐH, Tên, SĐT..." 
                             value={searchTerm}
-                            // SỬA LỖI TYPO: e.g.value -> e.target.value
                             onChange={e => setSearchTerm(e.target.value)} 
                             className={`${inputStyles} w-full pl-10`} 
                         />
@@ -444,7 +432,6 @@ const OrderManagementView: React.FC<{
                             className={`${inputStyles} w-full`}
                         >
                             <option value="Tất cả">Tất cả trạng thái</option>
-                            {/* SỬA: Dùng VN_STATUSES_FOR_UI để tạo options */}
                             {VN_STATUSES_FOR_UI.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
@@ -453,7 +440,6 @@ const OrderManagementView: React.FC<{
                   <table className="w-full text-sm text-left">
                     <thead className="text-xs text-[var(--admin-text-secondary)] uppercase border-b border-[var(--admin-border-color)]">
                       <tr>
-                        {/* Thêm cột cho nút expand */}
                         <th scope="col" className="px-2 py-3 w-12"></th>
                         <th scope="col" className="px-6 py-3">Mã đơn hàng</th>
                         <th scope="col" className="px-6 py-3">Khách hàng</th>
@@ -466,129 +452,123 @@ const OrderManagementView: React.FC<{
                     <tbody>
                       {filteredOrders.map((order) => {
                         const isExpanded = expandedOrderId === order.id;
-                        // Giả định Order có thuộc tính items: [{ productName, sku, price, quantity, size, flavor, image }]
                         const orderItems = (order as any).items || []; 
-
-                        // ==================================
-                        // === SỬA LỖI LOGIC HIỂN THỊ Ở ĐÂY ===
-                        // ==================================
-                        // 1. Lấy trạng thái GỐC (BE status)
                         const currentBeStatus = order.status; 
-                        // 2. Chuyển sang Tiếng Việt (VN status) để hiển thị
                         const currentVnStatus = BE_TO_VN_MAP[currentBeStatus] || 'Không rõ';
-                        // ==================================
 
                         return (
                           <React.Fragment key={order.id}>
-                            {/* === HÀNG 1: THÔNG TIN ĐƠN HÀNG === */}
-                            <tr className="border-b border-[var(--admin-border-color)] hover:bg-[var(--admin-bg-hover)]">
-                              
-                              {/* Nút Expand */}
+                            <tr className="border-b border-[var(--admin-border-color)] hover:bg-[var(--admin-bg-hover)] transition-colors">
                               <td className="px-2 py-4 text-center">
                                 <button 
                                   onClick={() => handleToggleExpand(order.id)} 
-                                  className="text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-main)] transition-colors"
-                                  disabled={orderItems.length === 0}
-                                  title={orderItems.length === 0 ? "Không có chi tiết" : "Xem chi tiết"}
+                                  className="text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-main)] transition-colors p-1 rounded hover:bg-[var(--admin-bg-accent)]"
+                                  title={isExpanded ? "Thu gọn" : "Xem chi tiết"}
                                 >
-                                  <ChevronDownIcon className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''} ${orderItems.length === 0 ? 'opacity-30' : ''}`} />
+                                  <ChevronDownIcon className={`w-5 h-5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                                 </button>
                               </td>
-
-                              <td className="px-6 py-4 font-mono text-[var(--admin-text-accent)]">{order.id}</td>
-                              <td className="px-6 py-4 font-medium">{order.customer.name}</td>
-                              <td className="px-6 py-4">{order.date}</td>
-                              <td className="px-6 py-4">{order.total.toLocaleString('vi-VN')}₫</td>
+                              <td className="px-6 py-4 font-mono text-[var(--admin-text-accent)] font-bold">{order.id}</td>
+                              <td className="px-6 py-4 font-medium">
+                                  <div className="flex flex-col">
+                                      <span>{order.customer.name}</span>
+                                      <span className="text-xs text-[var(--admin-text-secondary)]">{order.customer.phone}</span>
+                                  </div>
+                              </td>
+                              <td className="px-6 py-4 text-[var(--admin-text-secondary)]">{order.date}</td>
+                              <td className="px-6 py-4 font-bold">{order.total.toLocaleString('vi-VN')}₫</td>
                               <td className={`px-6 py-4 font-semibold ${getPaymentStatusClass(order.paymentStatus)}`}>{order.paymentStatus}</td>
                               <td className="px-6 py-4">
                                 <select 
-                                    // SỬA: Hiển thị giá trị Tiếng Việt (currentVnStatus)
                                     value={currentVnStatus} 
-                                    
                                     onChange={(e) => {
-                                        // 1. Lấy giá trị Tiếng Việt từ dropdown
                                         const vnValue = e.target.value;
-                                        // 2. Chuyển sang trạng thái GỐC (BE status)
                                         const beStatusToSend = VN_TO_BE_MAP[vnValue];
-                                        
-                                        if (beStatusToSend) {
-                                            console.log(`[STATUS_UPDATE] Gửi ID: ${order.id}, Trạng thái BE: ${beStatusToSend}`);
-                                            // 3. Gửi trạng thái GỐC đi
-                                            onUpdateStatus(order.id, beStatusToSend);
-                                        }
+                                        if (beStatusToSend) onUpdateStatus(order.id, beStatusToSend);
                                     }}
-                                    
-                                    // SỬA: Dùng trạng thái GỐC (currentBeStatus) để lấy class CSS
-                                    className={`text-xs font-semibold rounded-md p-1.5 border-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--admin-bg-card)] focus:ring-[var(--admin-text-accent)] ${getStatusClass(currentBeStatus)}`}
+                                    className={`text-xs font-semibold rounded-md p-1.5 border-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--admin-bg-card)] cursor-pointer ${getStatusClass(currentBeStatus)}`}
                                     style={{ backgroundColor: 'transparent' }}
                                 >
-                                  {/* SỬA: Dùng VN_STATUSES_FOR_UI để tạo options */}
                                   {VN_STATUSES_FOR_UI.map(s => <option key={s} value={s} className="bg-[var(--admin-bg-card)] text-[var(--admin-text-main)]">{s}</option>)}
                                 </select>
                               </td>
                             </tr>
                             
-                            {/* === HÀNG 2: CHI TIẾT SẢN PHẨM (ẨN/HIỆN) === */}
                             {isExpanded && (
-                              <tr className="bg-[var(--admin-bg-hover)]">
-                                {/* Colspan là 7 (1 nút + 6 cột info) */}
-                                <td colSpan={7} className="py-4 px-6 md:px-10 lg:px-16">
-                                  <h4 className="text-sm font-bold text-[var(--admin-text-main)] mb-2 ml-1">Chi tiết đơn hàng</h4>
-                                  <div className="border border-[var(--admin-border-color)] rounded-lg overflow-hidden">
-                                    <table className="w-full text-sm">
-                                      <thead className="bg-[var(--admin-bg-card)] text-xs text-[var(--admin-text-secondary)] uppercase">
-                                        <tr>
-                                          <th className="px-4 py-2 text-left">Sản phẩm</th>
-                                          {/* ĐÃ XÓA SKU */}
-                                          <th className="px-4 py-2 text-left">Đơn giá</th>
-                                          <th className="px-4 py-2 text-left">Số lượng</th>
-                                          <th className="px-4 py-2 text-left">Thành tiền</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className="bg-[var(--admin-bg-card)]">
-                                        {orderItems.map((item: any) => (
-                                          <tr key={item.sku} className="border-t border-[var(--admin-border-color)]">
-                                            
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center space-x-3">
-                                                    <img 
-                                                        src={item.image || (orderItems.length > 0 && orderItems[0]?.image) || ''} 
-                                                        alt={item.productName || item.sku} 
-                                                        className="w-8 h-8 rounded-md object-cover"
-                                                    />
-                                                    {/* SỬA LỖI FALLBACK: Ưu tiên ProductName > Name > SKU */}
-                                                    <span className="font-medium text-[var(--admin-text-main)]">
-                                                        {item.productName || item.name || `SKU: ${item.sku || 'Không rõ'}`}
-                                                    </span>
-                                                </div>
-                                                {(item.size || item.flavor) && (
-                                                    <p className="text-xs text-[var(--admin-text-secondary)] mt-1 ml-11"> 
-                                                        {item.size && `Kích cỡ: ${item.size}`}
-                                                        {item.size && item.flavor && ` | `} 
-                                                        {item.flavor && `Hương vị: ${item.flavor}`}
-                                                    </p>
-                                                )}
-                                            </td>
-                                            
-                                            {/* ĐÃ XÓA SKU: <td className="px-4 py-3 font-mono">{item.sku || 'N/A'}</td> */}
-                                            
-                                            <td className="px-4 py-3">{item.price.toLocaleString('vi-VN')}₫</td>
-                                            <td className="px-4 py-3">{item.quantity}</td>
-                                            <td className="px-4 py-3 font-semibold">
-                                                {(item.price * item.quantity).toLocaleString('vi-VN')}₫
-                                            </td>
-                                          </tr>
-                                        ))}
-                                        {orderItems.length === 0 && (
-                                            <tr>
-                                                {/* Cập nhật Colspan từ 5 xuống 4 */}
-                                                <td colSpan={4} className="text-center py-4 text-[var(--admin-text-secondary)]">
-                                                    Đơn hàng này không có chi tiết sản phẩm.
-                                                </td>
-                                            </tr>
-                                        )}
-                                      </tbody>
-                                    </table>
+                              <tr className="bg-[var(--admin-bg-hover)] animate-fade-in">
+                                <td colSpan={7} className="p-6">
+                                  <div className="bg-[var(--admin-bg-card)] rounded-xl border border-[var(--admin-border-color)] overflow-hidden">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border-b border-[var(--admin-border-color)]">
+                                        <div>
+                                            <h4 className="text-sm font-bold text-[var(--admin-text-accent)] uppercase mb-3 flex items-center gap-2">
+                                                <UserIconSvg className="w-4 h-4"/> Thông tin giao hàng
+                                            </h4>
+                                            <div className="space-y-2 text-sm text-[var(--admin-text-main)]">
+                                                <p className="flex"><span className="text-[var(--admin-text-secondary)] w-24 block">Họ tên:</span> <span className="font-medium">{order.customer.name}</span></p>
+                                                <p className="flex"><span className="text-[var(--admin-text-secondary)] w-24 block">Số điện thoại:</span> <span className="font-mono">{order.customer.phone || 'N/A'}</span></p>
+                                                <p className="flex"><span className="text-[var(--admin-text-secondary)] w-24 block">Email:</span> <span>{order.customer.email || 'N/A'}</span></p>
+                                                <p className="flex items-start"><span className="text-[var(--admin-text-secondary)] w-24 block flex-shrink-0">Địa chỉ:</span> <span>{order.customer.address || 'N/A'}</span></p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-[var(--admin-text-accent)] uppercase mb-3 flex items-center gap-2">
+                                                <OrderIcon className="w-4 h-4"/> Thông tin thanh toán
+                                            </h4>
+                                            <div className="space-y-2 text-sm text-[var(--admin-text-main)]">
+                                                <p className="flex"><span className="text-[var(--admin-text-secondary)] w-32 block">Phương thức:</span> <span className="font-bold">{getPaymentMethodName(order.paymentMethod)}</span></p>
+                                                <p className="flex"><span className="text-[var(--admin-text-secondary)] w-32 block">Trạng thái TT:</span> <span className={`${getPaymentStatusClass(order.paymentStatus)} font-bold`}>{order.paymentStatus}</span></p>
+                                                <p className="flex"><span className="text-[var(--admin-text-secondary)] w-32 block">Tổng tiền:</span> <span className="text-xl font-bold text-[var(--admin-text-accent)]">{order.total.toLocaleString('vi-VN')}₫</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-6">
+                                        <h4 className="text-sm font-bold text-[var(--admin-text-main)] mb-3">Danh sách sản phẩm</h4>
+                                        <div className="border border-[var(--admin-border-color)] rounded-lg overflow-hidden">
+                                            <table className="w-full text-sm">
+                                            <thead className="bg-[var(--admin-bg-accent)]/10 text-xs text-[var(--admin-text-secondary)] uppercase">
+                                                <tr>
+                                                <th className="px-4 py-2 text-left">Sản phẩm</th>
+                                                <th className="px-4 py-2 text-left">Đơn giá</th>
+                                                <th className="px-4 py-2 text-left">Số lượng</th>
+                                                <th className="px-4 py-2 text-left">Thành tiền</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-[var(--admin-bg-card)] divide-y divide-[var(--admin-border-color)]">
+                                                {orderItems.map((item: any) => (
+                                                <tr key={item.sku || Math.random()}>
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex items-center space-x-3">
+                                                            <div className="w-10 h-10 rounded bg-[var(--admin-bg-hover)] flex-shrink-0 overflow-hidden border border-[var(--admin-border-color)]">
+                                                                <img 
+                                                                    src={item.image || (orderItems.length > 0 && orderItems[0]?.image) || ''} 
+                                                                    alt={item.productName || item.sku} 
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-[var(--admin-text-main)]">
+                                                                    {item.productName || item.name || `SKU: ${item.sku}`}
+                                                                </p>
+                                                                {(item.size || item.flavor) && (
+                                                                    <p className="text-xs text-[var(--admin-text-secondary)] mt-0.5"> 
+                                                                        {item.flavor && <span className="mr-2">Vị: {item.flavor}</span>}
+                                                                        {item.size && <span>Size: {item.size}</span>}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-[var(--admin-text-secondary)]">{item.price.toLocaleString('vi-VN')}₫</td>
+                                                    <td className="px-4 py-3 font-bold text-[var(--admin-text-main)]">x{item.quantity}</td>
+                                                    <td className="px-4 py-3 font-bold text-[var(--admin-text-accent)]">
+                                                        {(item.price * item.quantity).toLocaleString('vi-VN')}₫
+                                                    </td>
+                                                </tr>
+                                                ))}
+                                            </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                   </div>
                                 </td>
                               </tr>
@@ -603,8 +583,6 @@ const OrderManagementView: React.FC<{
         </>
     );
 };
-// === KẾT THÚC SỬA ORDERMANAGEMENTVIEW ===
-
 
 const ComingSoonPage: React.FC<{ title: string }> = ({ title }) => (
     <>
@@ -617,7 +595,6 @@ const ComingSoonPage: React.FC<{ title: string }> = ({ title }) => (
         </div>
     </>
 );
-
 
 const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite, products, onAddProduct, onUpdateProduct, onDeleteProduct, orders, onUpdateOrderStatus }) => {
   const [activePage, setActivePage] = useState('Bảng điều khiển');
@@ -633,15 +610,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
 
   useEffect(() => {
     const body = document.body;
-    body.className = ''; // Clear all existing classes
+    body.className = ''; 
     if (theme === 'default') {
-        // The default styles are applied without a class
     } else {
         body.classList.add(`admin-theme-${theme}`);
     }
-
     return () => {
-        body.className = 'bg-gym-darker text-white'; // Cleanup back to default site theme
+        body.className = 'bg-gym-darker text-white'; 
     }
   }, [theme]);
 
@@ -698,12 +673,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
   const renderContent = () => {
     switch (activePage) {
         case 'Quản lý sản phẩm':
-            return <ProductManagementView 
-                        products={products} 
-                        onEdit={handleEditClick} 
-                        onDelete={handleDeleteClick} 
-                        onAddNew={handleAddNewClick}
-                    />;
+            return <ProductManagementView products={products} onEdit={handleEditClick} onDelete={handleDeleteClick} onAddNew={handleAddNewClick} />;
         case 'Quản lý đơn hàng':
             return <OrderManagementView orders={orders} onUpdateStatus={onUpdateOrderStatus} />;
         case 'Quản lý người dùng':
@@ -711,7 +681,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
             return <ComingSoonPage title={activePage} />;
         case 'Bảng điều khiển':
         default:
-            return <DashboardView products={products} />;
+            return <DashboardView products={products} orders={orders} />;
     }
   };
 
@@ -735,14 +705,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
               const isActive = activePage === item.name;
               return (
               <li key={item.name}>
-                <button
-                  onClick={() => handleNavClick(item.name)}
-                  className={`flex items-center w-full space-x-3 py-3 px-4 my-1 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? 'bg-[var(--admin-bg-accent)] text-[var(--admin-text-accent-strong)] font-bold'
-                      : 'text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-hover)]'
-                  }`}
-                >
+                <button onClick={() => handleNavClick(item.name)} className={`flex items-center w-full space-x-3 py-3 px-4 my-1 rounded-lg text-sm font-medium transition-all duration-200 ${isActive ? 'bg-[var(--admin-bg-accent)] text-[var(--admin-text-accent-strong)] font-bold' : 'text-[var(--admin-text-secondary)] hover:bg-[var(--admin-bg-hover)]'}`}>
                   <Icon />
                   <span>{item.name}</span>
                 </button>
@@ -761,14 +724,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-7xl mx-auto">
-          {/* Global Header Elements */}
           <div className="flex justify-end items-center mb-4 -mt-4">
               <div ref={themeMenuRef} className="relative">
-                  <button 
-                      onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
-                      className="text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-accent)] transition-colors p-2"
-                      aria-label="Đổi giao diện"
-                  >
+                  <button onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)} className="text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-accent)] transition-colors p-2">
                       <PaletteIcon className="h-6 w-6" />
                   </button>
                   {isThemeMenuOpen && (
@@ -786,19 +744,8 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
         </div>
       </main>
 
-      <AddProductModal 
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onAddProduct={onAddProduct}
-        onUpdateProduct={onUpdateProduct}
-        productToEdit={productToEdit}
-      />
-      <DeleteConfirmationModal 
-        isOpen={isDeleteModalOpen}
-        onClose={handleCancelDelete}
-        onConfirm={handleConfirmDelete}
-        productName={productToDelete?.name || ''}
-      />
+      <AddProductModal isOpen={isModalOpen} onClose={handleCloseModal} onAddProduct={onAddProduct} onUpdateProduct={onUpdateProduct} productToEdit={productToEdit} />
+      <DeleteConfirmationModal isOpen={isDeleteModalOpen} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} productName={productToDelete?.name || ''} />
     </div>
   );
 };

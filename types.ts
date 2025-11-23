@@ -1,18 +1,27 @@
-// File: types.ts (Đã cập nhật OrderStatus)
-// FIX: Removed self-referential import of Product type.
+// File: src/types.ts
 
 export interface ProductVariant {
   variantId: number;
   name: string;
-  sku: string;       // <- SKU CHÚNG TA CẦN
+  sku: string;
   price: number;
   oldPrice?: number;
   stockQuantity: number;
-  flavor: string;  // Ví dụ: "Chocolate Brownie"
-  size: string;      // Ví dụ: "5.5Lbs"
+  flavor: string;
+  size: string;
+  imageUrl?: string;
 }
 
-// 2. SỬA LẠI INTERFACE PRODUCT
+// 1. THÊM TYPE REVIEW
+export interface Review {
+  id: number;
+  author: string;
+  rating: number;
+  comment: string;
+  date: string;
+  avatar?: string;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -20,18 +29,14 @@ export interface Product {
   rating: number;
   reviews: number;
   inStock: boolean;
-  price: number; // (Đây có thể là giá GỐC/THẤP NHẤT)
+  price: number;
   oldPrice?: number;
   description: string;
-  
-  // Bạn có thể giữ 2 mảng này để UI (các nút) hoạt động
   flavors?: string[];
   sizes?: string[];
-  
-  // BẮT BUỘC THÊM DÒNG NÀY
   variants: ProductVariant[];
   category: string;
-  brand: string; // Danh sách các biến thể
+  brand: string;
   sku?: string;
   subCategory?: string;
   sold: number;
@@ -39,15 +44,17 @@ export interface Product {
   categoryId?: number;
   brandId?: number;
   
+  // 2. THÊM DÒNG NÀY ĐỂ HỨNG COMMENT
+  comments?: Review[]; 
 }
-// --- SỬA LỖI LOGIC Ở ĐÂY: Thêm productName, size, flavor vào CartItem ---
+
 export interface CartItem {
-  variantId: number; // Hoặc sku: string
+  variantId: number;
   productId: number;
-  name: string; // Tên biến thể (vd: Vị Chocolate 5Lbs)
-  productName: string; // <-- ĐÃ THÊM: Tên sản phẩm chính (vd: Gold Standard 100% Whey)
-  image: string; // Ảnh đại diện
-  price: number; // Giá tại lúc mua
+  name: string;
+  productName: string;
+  image: string;
+  price: number;
   quantity: number;
   sku: string;
   size?: string;
@@ -86,10 +93,8 @@ export interface NavLink {
   megaMenu?: MegaMenuItem[];
 }
 
-export type SortOptionValue = 'default' | 'popularity' | 'price-asc' | 'price-desc';
-
 export interface SortOption {
-  value: SortOptionValue;
+  value: 'default' | 'popularity' | 'price-asc' | 'price-desc';
   label: string;
 }
 
@@ -100,22 +105,15 @@ export interface User {
   role: 'USER' | 'ADMIN';
 }
 
-// ==========================================================
-// === SỬA LỖI QUAN TRỌNG: Dùng trạng thái gốc từ Backend ===
-// (Thay vì 'Đã giao hàng' | 'Đang xử lý' | 'Đã hủy')
-// ==========================================================
 export type OrderStatus = 'PENDING_CONFIRMATION' | 'PROCESSING' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED' | 'RETURNED';
-// ==========================================================
-
-
 export type PaymentStatus = 'Chưa thanh toán' | 'Đã thanh toán';
 
 export interface Order {
   id: string;
   date: string;
-  status: OrderStatus; // <-- ĐÃ SỬA: Giờ đây là trạng thái gốc (bắt buộc cho stepper)
+  status: OrderStatus;
   total: number;
-  items: CartItem[]; // Giờ đây 'items' là một mảng CartItem đã sửa
+  items: CartItem[];
   customer: {
     name: string;
     email: string;
@@ -125,37 +123,33 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: 'cod' | 'card';
 }
+
 export interface UserResponse {
   userId: number;
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
-  role: string; // (Backend trả về string "USER" hoặc "ADMIN")
+  role: string;
 }
 
 export interface ProductVariantRequest {
   name: string;
   sku: string;
-  price: number; // (Frontend dùng number, backend Java dùng BigDecimal)
+  price: number;
   salePrice?: number;
   stockQuantity: number;
-  flavor: string; // Bắt buộc admin nhập
-  size: string;   // Bắt buộc admin nhập
+  flavor: string;
+  size: string;
+  imageUrl?: string;
 }
 
-// 2. THÊM TYPE NÀY (Khớp với CreateProductRequest.java )
 export interface CreateProductRequest {
   name: string;
   description: string;
-  categoryId: number; // (Backend yêu cầu ID)
-  brandId: number;    // (Backend yêu cầu ID)
+  categoryId: number;
+  brandId: number;
   variants: ProductVariantRequest[];
-}
-export interface Review {
-  id: number;
-  author: string;
-  rating: number;
-  comment: string;
-  date: string;
+  imageUrls: string[]; // Đã thêm từ bước trước
+  //images: string[];    // Đã thêm từ bước trước
 }
