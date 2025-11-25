@@ -21,21 +21,20 @@ type SortOptionValue = 'default' | 'price-asc' | 'price-desc' | 'popularity';
 
 // DỮ LIỆU CỨNG
 const STATIC_CATEGORIES: Category[] = [
-    // Cha
     { id: 1, name: 'Whey Protein' },
     { id: 3, name: 'Tăng cân' },
     { id: 4, name: 'Tăng sức mạnh' },
     { id: 5, name: 'Hỗ trợ sức khỏe' },
     { id: 6, name: 'Phụ kiện' },
 
-    // Con (Whey ID 1)
+    // Con của Whey
     { id: 7, name: 'Whey Protein Blend', parentId: 1 },
     { id: 8, name: 'Whey Protein Isolate', parentId: 1 },
     { id: 9, name: 'Hydrolyzed Whey', parentId: 1 },
     { id: 10, name: 'Vegan Protein', parentId: 1 },
     { id: 11, name: 'Protein Bar', parentId: 1 },
 
-    // Con (Tăng sức mạnh ID 4)
+    // Con của Tăng sức mạnh
     { id: 12, name: 'Pre-workout', parentId: 4 },
     { id: 13, name: 'BCAA / EAA', parentId: 4 },
     { id: 14, name: 'Creatine', parentId: 4 },
@@ -60,7 +59,7 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
       return currentCategoryObj;
   }, [currentCategoryObj, allCategories]);
 
-  // 3. Auto-select nút con nếu vào từ menu xổ xuống
+  // 3. Auto-select
   useEffect(() => {
       if (currentCategoryObj && currentCategoryObj.parentId) {
           setActiveSubCategoryId(currentCategoryObj.id);
@@ -84,7 +83,7 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
 
 
   // =====================================================================
-  // 👇👇👇 LOGIC LỌC QUAN TRỌNG ĐÃ SỬA 👇👇👇
+  // 👇👇👇 LOGIC LỌC ĐÃ FIX LỖI "TẤT CẢ" 👇👇👇
   // =====================================================================
   const initialProducts = useMemo(() => {
     return products.filter(product => {
@@ -95,30 +94,53 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
 
         // B. Lọc Category
         if (parentCategory) {
-            const pId = parentCategory.id; // Ví dụ: 1 (Whey Protein)
-
-            // 1. NẾU ĐANG CHỌN NÚT CON (VD: Isolate - 8)
+            
+            // --- TRƯỜNG HỢP 1: ĐANG CHỌN CON CỤ THỂ (LỌC KỸ) ---
             if (activeSubCategoryId !== null) {
-                // Chỉ lấy đúng ID đó: 8 == 8
-                return Number(product.categoryId) === activeSubCategoryId;
+                // Ưu tiên 1: Khớp ID danh mục con
+                if (Number(product.categoryId) === activeSubCategoryId) return true;
+                
+                // Ưu tiên 2: Khớp tên danh mục con (Dự phòng)
+                const subName = allCategories.find(c => c.id === activeSubCategoryId)?.name;
+                if (subName && product.category === subName) return true;
+
+                return false;
             }
             
-            // 2. NẾU CHỌN "TẤT CẢ" (activeSubCategoryId === null)
-            // Lấy nếu: (ID == 1) HOẶC (Bố == 1)
-            // 👇 SỬA Ở ĐÂY: Thêm điều kiện parentCategoryId
-            const isDirectParent = Number(product.categoryId) === pId;
-            const isChildOfParent = Number(product.parentCategoryId) === pId;
+            // --- TRƯỜNG HỢP 2: CHỌN "TẤT CẢ" (LỌC THOÁNG) ---
+            // Logic: Lấy sản phẩm khớp với Cha HOẶC khớp với bất kỳ con nào của Cha
+            
+            // 1. Khớp trực tiếp với Cha
+            if (Number(product.categoryId) === parentCategory.id) return true;
+            if (Number(product.parentCategoryId) === parentCategory.id) return true;
+            if (product.category === parentCategory.name) return true;
 
-            return isDirectParent || isChildOfParent;
+            // 2. 👇 FIX QUAN TRỌNG: Kiểm tra xem sản phẩm có thuộc danh mục CON nào của cha không?
+            // Lấy danh sách ID của tất cả các con thuộc Parent hiện tại
+            const childCategoryIds = allCategories
+                .filter(c => c.parentId === parentCategory.id)
+                .map(c => c.id);
+            
+            // Nếu ID danh mục của sản phẩm nằm trong danh sách con -> Lấy
+            if (childCategoryIds.includes(Number(product.categoryId))) return true;
+
+            // 3. Dự phòng: Kiểm tra tên category của sản phẩm có khớp tên danh mục con nào không
+            const childCategoryNames = allCategories
+                .filter(c => c.parentId === parentCategory.id)
+                .map(c => c.name);
+            
+            if (childCategoryNames.includes(product.category)) return true;
+
+            return false;
         }
 
-        // Fallback
+        // Fallback cho trường hợp không xác định được Parent
         return product.category === filterBy.value;
     });
-  }, [products, filterBy, parentCategory, activeSubCategoryId]);
+  }, [products, filterBy, parentCategory, activeSubCategoryId, allCategories]);
   // =====================================================================
 
-  // --- LOGIC FILTER GIÁ & SORT (GIỮ NGUYÊN) ---
+  // Filter Giá & Sort
   const priceBounds = useMemo(() => {
     if (initialProducts.length === 0) return { min: 0, max: 5000000 };
     const prices = initialProducts.map(p => p.price);
@@ -173,7 +195,6 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
         </h1>
       </div>
 
-      {/* THANH CHỌN SUB-CATEGORY */}
       {filterBy.type === 'category' && subCategories.length > 0 && (
           <div className="flex flex-wrap justify-center gap-4 mb-10">
               <button 
@@ -219,19 +240,14 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
             </p>
             <div className="flex items-center space-x-3">
               <label htmlFor="sort-by" className="text-sm text-gym-gray font-medium">Sắp xếp:</label>
-              <div className="relative">
-                  <select
-                    id="sort-by"
-                    value={sortOption}
-                    onChange={(e) => setSortOption(e.target.value as SortOptionValue)}
-                    className="bg-gym-darker border border-gray-600 rounded-lg py-2 pl-3 pr-8 text-white text-sm focus:outline-none focus:border-gym-yellow appearance-none cursor-pointer"
-                  >
-                    {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                  </div>
-              </div>
+              <select
+                id="sort-by"
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as SortOptionValue)}
+                className="bg-gym-darker border border-gray-600 rounded-lg py-2 pl-3 pr-8 text-white text-sm focus:outline-none focus:border-gym-yellow appearance-none cursor-pointer"
+              >
+                {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
             </div>
           </div>
 
@@ -249,7 +265,9 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
                   </svg>
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Không tìm thấy sản phẩm</h3>
-              <p className="text-gray-400 max-w-xs mx-auto">Rất tiếc, không có sản phẩm nào khớp với bộ lọc hiện tại.</p>
+              <p className="text-gray-400 max-w-xs mx-auto">
+                  Rất tiếc, không có sản phẩm nào khớp với bộ lọc hiện tại.
+              </p>
               <button onClick={resetFilters} className="mt-6 text-gym-yellow font-bold hover:underline">
                   Xóa bộ lọc & Thử lại
               </button>
