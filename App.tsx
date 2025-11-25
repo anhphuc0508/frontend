@@ -30,6 +30,37 @@ import AdminPage from './components/AdminPage';
 import AccountPage from './components/AccountPage';
 import OrderHistoryPage from './components/OrderHistoryPage';
 
+// ====================================================================
+// 1. MAP CATEGORY ID
+const FE_CATEGORY_ID_MAP: Record<string, number> = {
+    'Whey Protein': 1, 'Tăng cân': 3, 'Tăng sức mạnh': 4, 'Hỗ trợ sức khỏe': 5, 'Phụ kiện': 6,
+    'Whey Protein Blend': 7, 'Whey Protein Isolate': 8, 'Hydrolyzed Whey': 9, 'Vegan Protein': 10, 'Protein Bar': 11,
+    'Pre-workout': 12, 'BCAA / EAA': 13, 'Creatine': 14,
+};
+
+// 2. MAP PARENT ID (Con -> Cha)
+const CHILD_TO_PARENT_ID_MAP: Record<number, number> = {
+    7: 1, 8: 1, 9: 1, 10: 1, 11: 1, // Con của Whey
+    12: 4, 13: 4, 14: 4,            // Con của Tăng sức mạnh
+};
+
+// 3. 👇 MAP BRAND ID (MỚI THÊM ĐỂ FIX LỖI MẤT THƯƠNG HIỆU)
+const FE_BRAND_ID_MAP: Record<string, number> = {
+    'Optimum Nutrition': 1,
+    'Myprotein': 2,
+    'Rule 1': 3,
+    'Applied Nutrition': 4,
+    'Nutrabolt (C4)': 5,
+    'BPI Sports': 6,
+    'Thorne Research': 7,
+    'Nutrex': 8,
+    'Redcon1': 9,
+    'GymSup': 10,
+    'ON': 1, 'Rule1': 3, 'C4': 5, 
+};
+// ====================================================================
+
+
 const parseVariantName = (name: string): { flavor: string, size: string } => {
     const sizeRegex = /(\d+(\.\d+)?\s*(Lbs|kg|Servings))/i;
     const sizeMatch = name.match(sizeRegex);
@@ -44,8 +75,23 @@ const parseVariantName = (name: string): { flavor: string, size: string } => {
     return { flavor: flavor || 'Default Flavor', size: size };
 };
 
-// === HÀM MAP DỮ LIỆU QUAN TRỌNG (ĐÃ SỬA) ===
+// === HÀM MAP DỮ LIỆU ===
 const mapProductResponseToProduct = (res: any): Product => {
+  // A. Xử lý Category
+  const rawCategoryName = res.categoryName || res.category || 'Chưa phân loại';
+  const mappedId = res.categoryId || FE_CATEGORY_ID_MAP[rawCategoryName] || 0;
+  
+  let mappedParentId = res.parentCategoryId;
+  if (!mappedParentId) mappedParentId = CHILD_TO_PARENT_ID_MAP[mappedId];
+  if (!mappedParentId) {
+      const FE_PARENT_NAME_MAP: Record<string, number> = {
+          'Whey Protein Blend': 1, 'Whey Protein Isolate': 1, 'Hydrolyzed Whey': 1, 'Vegan Protein': 1, 'Protein Bar': 1,
+          'Pre-workout': 4, 'BCAA / EAA': 4, 'Creatine': 4,
+      };
+      mappedParentId = FE_PARENT_NAME_MAP[rawCategoryName];
+  }
+
+  // B. Xử lý Variants
   const mappedVariants = (res.variants || []).map((v: any) => {
       const { flavor: parsedFlavor, size: parsedSize } = parseVariantName(v.name);
       return { 
@@ -53,16 +99,17 @@ const mapProductResponseToProduct = (res: any): Product => {
           flavor: parsedFlavor, 
           size: parsedSize,
           imageUrl: v.imageUrl,
-          categoryId: res.categoryId || 0,
-          parentCategoryId: res.parentCategoryId || undefined,
+          categoryId: mappedId,
+          parentCategoryId: mappedParentId,
           oldPrice: v.salePrice 
       };
   });
+  
   const allFlavors: string[] = [...new Set<string>(mappedVariants.map((v: any) => v.flavor as string).filter(Boolean))];
   const allSizes: string[] = [...new Set<string>(mappedVariants.map((v: any) => v.size as string).filter(Boolean))];
   const firstVariant = mappedVariants.length > 0 ? mappedVariants[0] : null;
 
-  // 1. Logic Ảnh
+  // C. Xử lý Ảnh
   let finalImages: string[] = [];
   if (res.gallery && Array.isArray(res.gallery) && res.gallery.length > 0) finalImages = res.gallery;
   else if (res.thumbnail && typeof res.thumbnail === 'string') finalImages = [res.thumbnail];
@@ -70,11 +117,10 @@ const mapProductResponseToProduct = (res: any): Product => {
   else if (res.images && Array.isArray(res.images) && res.images.length > 0) finalImages = res.images;
   else if (res.imageUrl && typeof res.imageUrl === 'string') finalImages = [res.imageUrl];
   else if (res.image && typeof res.image === 'string') finalImages = [res.image];
-  
   if (finalImages.length === 0) finalImages = [`https://placehold.co/400x400?text=No+Image`];
 
-  // 2. Logic Comment
-  const rawComments = res.reviews || res.comments || []; // Backend của bạn trả về reviewsList hay reviews thì sửa ở đây nếu cần
+  // D. Xử lý Review
+  const rawComments = res.reviews || res.comments || []; 
   const mappedComments = Array.isArray(rawComments) ? rawComments.map((c: any) => ({
       id: c.id || Math.random(),
       author: c.author || c.userName || c.user?.fullName || c.username || "Người dùng",
@@ -83,8 +129,7 @@ const mapProductResponseToProduct = (res: any): Product => {
       date: c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : "Vừa xong",
       avatar: c.avatar || `https://ui-avatars.com/api/?name=${c.author || "User"}&background=random`
   })) : [];
-
-  // Map reviewList từ backend (nếu có trường reviewList riêng)
+  
   const finalReviewsList = res.reviewList ? res.reviewList.map((r: any) => ({
       id: r.id,
       username: r.username,
@@ -92,14 +137,18 @@ const mapProductResponseToProduct = (res: any): Product => {
       rating: r.rating,
       comment: r.comment,
       createdAt: r.createdAt
-  })) : mappedComments; // Fallback về mappedComments nếu ko có reviewList
+  })) : mappedComments; 
+
+  // E. 👇 Xử lý Brand (FIX LỖI MẤT BRAND KHI SỬA)
+  const rawBrandName = res.brandName || res.brand || 'Chưa rõ';
+  const mappedBrandId = res.brandId || FE_BRAND_ID_MAP[rawBrandName] || 0;
 
   return {
     id: res.productId || res.id,
     name: res.name,
     description: res.description,
-    category: res.categoryName || 'Chưa phân loại', 
-    brand: res.brandName || 'Chưa rõ',       
+    category: rawCategoryName, 
+    brand: rawBrandName,       
     variants: mappedVariants, 
     price: firstVariant?.price || 0,
     oldPrice: firstVariant?.oldPrice || undefined,
@@ -107,20 +156,19 @@ const mapProductResponseToProduct = (res: any): Product => {
     inStock: (firstVariant?.stockQuantity || 0) > 0,
     stockQuantity: firstVariant?.stockQuantity || 0,
     images: finalImages, 
-    
-    // Dùng reviewList chuẩn từ backend
-    
-    
     rating: res.averageRating || 0,
     reviews: res.totalReviews || finalReviewsList.length || 0,
     sold: 0,
     flavors: allFlavors, 
     sizes: allSizes,     
-    categoryId: res.categoryId || 0, 
-    brandId: res.brandId || 0,     
+    
+    categoryId: mappedId, 
+    parentCategoryId: mappedParentId,
+    
+    // Gán Brand ID đã map vào đây
+    brandId: mappedBrandId,     
   };
 };
-// =========================================
 
 const mapBackendOrderToFrontendOrder = (beOrder: any): Order => {
   const mapPaymentStatus = (status: string): PaymentStatus => {
@@ -189,7 +237,6 @@ const App: React.FC = () => {
   const fetchProducts = useCallback(async () => {
     try {
       const res = await api.get('/products');
-      console.log("Data products từ Backend:", res.data);
       const mappedProducts = res.data.map(mapProductResponseToProduct);
       setProducts(mappedProducts); 
     } catch (err: any) {

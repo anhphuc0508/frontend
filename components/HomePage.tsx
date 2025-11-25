@@ -13,16 +13,25 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ products, onProductSelect, onCategorySelect }) => {
+  // Lấy 4 sản phẩm mới nhất/phổ biến nhất
   const trendingProducts = products.slice(0, 4);
-  const wheyProducts = products.filter(p => p.category === 'Whey Protein').slice(0, 6);
-  const strengthProducts = products.filter(p => p.category === 'Tăng sức mạnh').slice(0, 6);
 
   // =======================================================
-  // === FIX LỖI SLIDE (Code gọn gàng) ===
+  // 👇 SỬA LẠI LOGIC LỌC (DÙNG ID ĐỂ GOM CẢ CHA LẪN CON)
   // =======================================================
-  const heroSlides: HeroSlide[] = [];
   
-  // Lấy 4 sản phẩm đầu tiên để làm slide
+  // ID 1: Whey Protein (Lấy cả sản phẩm có categoryId = 1 HOẶC parentCategoryId = 1)
+  const wheyProducts = products.filter(p => 
+      Number(p.categoryId) === 1 || Number(p.parentCategoryId) === 1
+  ).slice(0, 8); // Tăng lên 8 xem cho đã mắt
+
+  // ID 4: Tăng sức mạnh (Lấy cả sản phẩm có categoryId = 4 HOẶC parentCategoryId = 4)
+  const strengthProducts = products.filter(p => 
+      Number(p.categoryId) === 4 || Number(p.parentCategoryId) === 4
+  ).slice(0, 8);
+  // =======================================================
+
+  const heroSlides: HeroSlide[] = [];
   const slideProducts = products.slice(0, 4);
 
   slideProducts.forEach(p => {
@@ -35,7 +44,6 @@ const HomePage: React.FC<HomePageProps> = ({ products, onProductSelect, onCatego
           });
       }
   });
-  // =======================================================
 
   return (
     <>
@@ -47,7 +55,7 @@ const HomePage: React.FC<HomePageProps> = ({ products, onProductSelect, onCatego
         <CategorySection 
           title="WHEY PROTEIN"
           categoryKey="Whey Protein"
-          // 👇 Tên này phải khớp 100% với STATIC_CATEGORIES bên CategoryPage.tsx
+          // Danh sách nút bấm danh mục con
           subCategories={['Whey Protein Blend', 'Whey Protein Isolate', 'Hydrolyzed Whey', 'Vegan Protein', 'Protein Bar']}
           products={wheyProducts}
           onProductSelect={onProductSelect}
@@ -57,12 +65,8 @@ const HomePage: React.FC<HomePageProps> = ({ products, onProductSelect, onCatego
         <CategorySection 
           title="TĂNG SỨC MẠNH"
           categoryKey="Tăng sức mạnh"
-          // 👇 SỬA LẠI TÊN CHO KHỚP DATABASE
-          // Sai: ['Pre-Workout', 'Creatine', 'Intra-Workout', 'BCAAs']
-          // Đúng:
-        subCategories={['Pre-workout',   // Chữ 'w' thường
-              'Creatine', 
-              'BCAA / EAA']}
+          // Danh sách nút bấm danh mục con
+          subCategories={['Pre-workout', 'Creatine', 'BCAA / EAA']}
           products={strengthProducts}
           onProductSelect={onProductSelect}
           onCategorySelect={onCategorySelect}

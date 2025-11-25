@@ -42,9 +42,11 @@ const STATIC_CATEGORIES: Category[] = [
 
 const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProductSelect, onBack }) => {
   const [allCategories] = useState<Category[]>(STATIC_CATEGORIES);
+  
+  // State lưu ID danh mục con đang chọn
   const [activeSubCategoryId, setActiveSubCategoryId] = useState<number | null>(null);
 
-  // 1. Xác định Menu hiện tại
+  // 1. Xác định Category hiện tại (Object)
   const currentCategoryObj = useMemo(() => {
       if (filterBy.type !== 'category') return null;
       return allCategories.find(c => c.name === filterBy.value);
@@ -59,14 +61,29 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
       return currentCategoryObj;
   }, [currentCategoryObj, allCategories]);
 
-  // 3. Auto-select
+  // =====================================================================
+  // 👇👇👇 FIX NHANH: TỰ ĐỘNG CHỌN CON ĐẦU TIÊN 👇👇👇
+  // =====================================================================
   useEffect(() => {
-      if (currentCategoryObj && currentCategoryObj.parentId) {
-          setActiveSubCategoryId(currentCategoryObj.id);
-      } else {
-          setActiveSubCategoryId(null);
+      if (currentCategoryObj) {
+          // Trường hợp 1: Nếu URL đang là con (VD: Pre-workout) -> Chọn chính nó
+          if (currentCategoryObj.parentId) {
+              setActiveSubCategoryId(currentCategoryObj.id);
+          } 
+          // Trường hợp 2: Nếu URL là Cha (VD: Tăng sức mạnh) -> Tìm con đầu tiên để chọn
+          else {
+              const firstChild = allCategories.find(c => c.parentId === currentCategoryObj.id);
+              if (firstChild) {
+                  // Có con -> Chọn con đầu tiên luôn (Không để null nữa)
+                  setActiveSubCategoryId(firstChild.id);
+              } else {
+                  // Không có con (VD: Phụ kiện) -> Thì đành chịu, để null
+                  setActiveSubCategoryId(null);
+              }
+          }
       }
-  }, [currentCategoryObj]);
+  }, [currentCategoryObj, allCategories]);
+  // =====================================================================
 
   const subCategories = useMemo(() => {
     if (!parentCategory) return [];
@@ -81,66 +98,36 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
       return parentCategory?.name || filterBy.value;
   }, [activeSubCategoryId, allCategories, parentCategory, filterBy.value]);
 
-
-  // =====================================================================
-  // 👇👇👇 LOGIC LỌC ĐÃ FIX LỖI "TẤT CẢ" 👇👇👇
-  // =====================================================================
+  // Logic lọc sản phẩm đơn giản hóa
   const initialProducts = useMemo(() => {
     return products.filter(product => {
-        // A. Lọc Brand
         if (filterBy.type === 'brand') {
             return product.brand === filterBy.value;
         }
 
-        // B. Lọc Category
         if (parentCategory) {
-            
-            // --- TRƯỜNG HỢP 1: ĐANG CHỌN CON CỤ THỂ (LỌC KỸ) ---
+            // Nếu đang chọn Tab con (mà code trên đã ép buộc chọn rồi)
             if (activeSubCategoryId !== null) {
-                // Ưu tiên 1: Khớp ID danh mục con
+                // Ưu tiên 1: So khớp ID
                 if (Number(product.categoryId) === activeSubCategoryId) return true;
                 
-                // Ưu tiên 2: Khớp tên danh mục con (Dự phòng)
+                // Ưu tiên 2: So khớp tên (Dự phòng nếu backend chưa trả ID đúng)
                 const subName = allCategories.find(c => c.id === activeSubCategoryId)?.name;
                 if (subName && product.category === subName) return true;
 
                 return false;
             }
             
-            // --- TRƯỜNG HỢP 2: CHỌN "TẤT CẢ" (LỌC THOÁNG) ---
-            // Logic: Lấy sản phẩm khớp với Cha HOẶC khớp với bất kỳ con nào của Cha
-            
-            // 1. Khớp trực tiếp với Cha
+            // Nếu vẫn lọt vào đây (trường hợp ko có con), lọc theo cha
             if (Number(product.categoryId) === parentCategory.id) return true;
-            if (Number(product.parentCategoryId) === parentCategory.id) return true;
             if (product.category === parentCategory.name) return true;
-
-            // 2. 👇 FIX QUAN TRỌNG: Kiểm tra xem sản phẩm có thuộc danh mục CON nào của cha không?
-            // Lấy danh sách ID của tất cả các con thuộc Parent hiện tại
-            const childCategoryIds = allCategories
-                .filter(c => c.parentId === parentCategory.id)
-                .map(c => c.id);
-            
-            // Nếu ID danh mục của sản phẩm nằm trong danh sách con -> Lấy
-            if (childCategoryIds.includes(Number(product.categoryId))) return true;
-
-            // 3. Dự phòng: Kiểm tra tên category của sản phẩm có khớp tên danh mục con nào không
-            const childCategoryNames = allCategories
-                .filter(c => c.parentId === parentCategory.id)
-                .map(c => c.name);
-            
-            if (childCategoryNames.includes(product.category)) return true;
-
-            return false;
         }
 
-        // Fallback cho trường hợp không xác định được Parent
         return product.category === filterBy.value;
     });
   }, [products, filterBy, parentCategory, activeSubCategoryId, allCategories]);
-  // =====================================================================
 
-  // Filter Giá & Sort
+  // --- Logic Sort & Filter giữ nguyên ---
   const priceBounds = useMemo(() => {
     if (initialProducts.length === 0) return { min: 0, max: 5000000 };
     const prices = initialProducts.map(p => p.price);
@@ -197,16 +184,7 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
 
       {filterBy.type === 'category' && subCategories.length > 0 && (
           <div className="flex flex-wrap justify-center gap-4 mb-10">
-              <button 
-                  onClick={() => setActiveSubCategoryId(null)}
-                  className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 border-2 ${
-                      activeSubCategoryId === null 
-                      ? 'bg-gym-yellow border-gym-yellow text-gym-darker shadow-[0_0_15px_rgba(255,215,0,0.4)] scale-105' 
-                      : 'bg-transparent border-gray-700 text-gray-400 hover:border-gym-yellow hover:text-white'
-                  }`}
-              >
-                  Tất cả
-              </button>
+              {/* Đã xóa nút "Tất cả" để tránh lỗi, chỉ hiện các con */}
               {subCategories.map(sub => (
                   <button 
                       key={sub.id}
