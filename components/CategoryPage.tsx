@@ -1,12 +1,9 @@
-// File: src/components/CategoryPage.tsx
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product, SortOption } from '../types';
 import { SORT_OPTIONS } from '../constants';
 import ProductCard from './ProductCard';
 import ProductFilters from './ProductFilters';
 
-// Định nghĩa kiểu dữ liệu cho Danh mục
 interface Category {
   id: number;
   name: string;
@@ -22,23 +19,23 @@ interface CategoryPageProps {
 
 type SortOptionValue = 'default' | 'price-asc' | 'price-desc' | 'popularity';
 
-// 👇 DỮ LIỆU DANH MỤC CỨNG (Quan trọng: Tên phải khớp 100% với Menu)
+// DỮ LIỆU CỨNG
 const STATIC_CATEGORIES: Category[] = [
-    // Danh mục CHA
+    // Cha
     { id: 1, name: 'Whey Protein' },
     { id: 3, name: 'Tăng cân' },
     { id: 4, name: 'Tăng sức mạnh' },
     { id: 5, name: 'Hỗ trợ sức khỏe' },
     { id: 6, name: 'Phụ kiện' },
 
-    // Danh mục CON (Whey Protein)
+    // Con (Whey ID 1)
     { id: 7, name: 'Whey Protein Blend', parentId: 1 },
     { id: 8, name: 'Whey Protein Isolate', parentId: 1 },
     { id: 9, name: 'Hydrolyzed Whey', parentId: 1 },
     { id: 10, name: 'Vegan Protein', parentId: 1 },
     { id: 11, name: 'Protein Bar', parentId: 1 },
 
-    // Danh mục CON (Tăng sức mạnh)
+    // Con (Tăng sức mạnh ID 4)
     { id: 12, name: 'Pre-workout', parentId: 4 },
     { id: 13, name: 'BCAA / EAA', parentId: 4 },
     { id: 14, name: 'Creatine', parentId: 4 },
@@ -48,82 +45,80 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
   const [allCategories] = useState<Category[]>(STATIC_CATEGORIES);
   const [activeSubCategoryId, setActiveSubCategoryId] = useState<number | null>(null);
 
-  // =========================================================
-  // 👇👇👇 LOGIC THÔNG MINH TỰ NHẬN DIỆN CHA/CON 👇👇👇
-  // =========================================================
-  
-  // 1. Tìm cái danh mục mà người dùng vừa bấm vào (Dựa trên tên)
-  const targetCategory = useMemo(() => {
+  // 1. Xác định Menu hiện tại
+  const currentCategoryObj = useMemo(() => {
       if (filterBy.type !== 'category') return null;
       return allCategories.find(c => c.name === filterBy.value);
   }, [allCategories, filterBy.value]);
 
-  // 2. Xác định ai là CHA thực sự để hiển thị giao diện
-  const currentParentCategory = useMemo(() => {
-      if (!targetCategory) return null;
-      
-      // Nếu cái vừa bấm có parentId -> Nó là CON -> Lấy thằng Cha của nó
-      if (targetCategory.parentId) {
-          return allCategories.find(c => c.id === targetCategory.parentId);
+  // 2. Xác định Cha
+  const parentCategory = useMemo(() => {
+      if (!currentCategoryObj) return null;
+      if (currentCategoryObj.parentId) {
+          return allCategories.find(c => c.id === currentCategoryObj.parentId);
       }
-      // Nếu không -> Chính nó là CHA
-      return targetCategory;
-  }, [targetCategory, allCategories]);
+      return currentCategoryObj;
+  }, [currentCategoryObj, allCategories]);
 
-  // 3. Tự động SET ACTIVE cho nút bấm con (Effect)
+  // 3. Auto-select nút con nếu vào từ menu xổ xuống
   useEffect(() => {
-      // Nếu người dùng bấm vào một danh mục CON (ví dụ: Isolate)
-      if (targetCategory && targetCategory.parentId) {
-          setActiveSubCategoryId(targetCategory.id); // Tự động kích hoạt nút Isolate
+      if (currentCategoryObj && currentCategoryObj.parentId) {
+          setActiveSubCategoryId(currentCategoryObj.id);
       } else {
-          setActiveSubCategoryId(null); // Nếu bấm Cha thì reset về "Tất cả"
+          setActiveSubCategoryId(null);
       }
-  }, [targetCategory]);
+  }, [currentCategoryObj]);
 
-  // =========================================================
-
-  // 4. Tìm danh sách các anh em (Sub-categories) để hiện ra thanh ngang
   const subCategories = useMemo(() => {
-    if (!currentParentCategory) return [];
-    return allCategories.filter(c => c.parentId === currentParentCategory.id);
-  }, [allCategories, currentParentCategory]);
+    if (!parentCategory) return [];
+    return allCategories.filter(c => c.parentId === parentCategory.id);
+  }, [allCategories, parentCategory]);
 
-  // 5. Tiêu đề hiển thị (Nếu đang chọn con thì hiện tên con)
   const displayTitle = useMemo(() => {
       if (activeSubCategoryId) {
           const sub = allCategories.find(c => c.id === activeSubCategoryId);
-          return sub ? sub.name : (currentParentCategory?.name || filterBy.value);
+          if (sub) return sub.name;
       }
-      return currentParentCategory?.name || filterBy.value;
-  }, [activeSubCategoryId, allCategories, currentParentCategory, filterBy.value]);
+      return parentCategory?.name || filterBy.value;
+  }, [activeSubCategoryId, allCategories, parentCategory, filterBy.value]);
 
 
-  // 6. LỌC SẢN PHẨM (FINAL)
+  // =====================================================================
+  // 👇👇👇 LOGIC LỌC QUAN TRỌNG ĐÃ SỬA 👇👇👇
+  // =====================================================================
   const initialProducts = useMemo(() => {
     return products.filter(product => {
-        // A. Lọc theo Brand
+        // A. Lọc Brand
         if (filterBy.type === 'brand') {
             return product.brand === filterBy.value;
         }
 
-        // B. Lọc theo Category
-        if (currentParentCategory) {
-            // Nếu đang chọn nút con (hoặc vào từ menu con)
-            if (activeSubCategoryId) {
+        // B. Lọc Category
+        if (parentCategory) {
+            const pId = parentCategory.id; // Ví dụ: 1 (Whey Protein)
+
+            // 1. NẾU ĐANG CHỌN NÚT CON (VD: Isolate - 8)
+            if (activeSubCategoryId !== null) {
+                // Chỉ lấy đúng ID đó: 8 == 8
                 return Number(product.categoryId) === activeSubCategoryId;
             }
             
-            // Nếu đang chọn "Tất cả" của trang Cha
-            return Number(product.categoryId) === currentParentCategory.id || 
-                   Number(product.parentCategoryId) === currentParentCategory.id;
+            // 2. NẾU CHỌN "TẤT CẢ" (activeSubCategoryId === null)
+            // Lấy nếu: (ID == 1) HOẶC (Bố == 1)
+            // 👇 SỬA Ở ĐÂY: Thêm điều kiện parentCategoryId
+            const isDirectParent = Number(product.categoryId) === pId;
+            const isChildOfParent = Number(product.parentCategoryId) === pId;
+
+            return isDirectParent || isChildOfParent;
         }
 
         // Fallback
         return product.category === filterBy.value;
     });
-  }, [products, filterBy, currentParentCategory, activeSubCategoryId]);
+  }, [products, filterBy, parentCategory, activeSubCategoryId]);
+  // =====================================================================
 
-  // --- CÁC LOGIC LỌC GIÁ & SORT GIỮ NGUYÊN ---
+  // --- LOGIC FILTER GIÁ & SORT (GIỮ NGUYÊN) ---
   const priceBounds = useMemo(() => {
     if (initialProducts.length === 0) return { min: 0, max: 5000000 };
     const prices = initialProducts.map(p => p.price);
@@ -183,10 +178,10 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
           <div className="flex flex-wrap justify-center gap-4 mb-10">
               <button 
                   onClick={() => setActiveSubCategoryId(null)}
-                  className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                  className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 border-2 ${
                       activeSubCategoryId === null 
-                      ? 'bg-gym-yellow text-gym-darker shadow-lg scale-105' 
-                      : 'bg-gym-dark border border-gray-700 text-gray-400 hover:border-gym-yellow hover:text-white'
+                      ? 'bg-gym-yellow border-gym-yellow text-gym-darker shadow-[0_0_15px_rgba(255,215,0,0.4)] scale-105' 
+                      : 'bg-transparent border-gray-700 text-gray-400 hover:border-gym-yellow hover:text-white'
                   }`}
               >
                   Tất cả
@@ -195,10 +190,10 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
                   <button 
                       key={sub.id}
                       onClick={() => setActiveSubCategoryId(sub.id)}
-                      className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                      className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 border-2 ${
                           activeSubCategoryId === sub.id 
-                          ? 'bg-gym-yellow text-gym-darker shadow-lg scale-105' 
-                          : 'bg-gym-dark border border-gray-700 text-gray-400 hover:border-gym-yellow hover:text-white'
+                          ? 'bg-gym-yellow border-gym-yellow text-gym-darker shadow-[0_0_15px_rgba(255,215,0,0.4)] scale-105' 
+                          : 'bg-transparent border-gray-700 text-gray-400 hover:border-gym-yellow hover:text-white'
                       }`}
                   >
                       {sub.name}
@@ -254,11 +249,7 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ products, filterBy, onProdu
                   </svg>
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Không tìm thấy sản phẩm</h3>
-              <p className="text-gray-400 max-w-xs mx-auto">
-                  {activeSubCategoryId 
-                    ? "Chưa có sản phẩm nào thuộc danh mục con này." 
-                    : "Rất tiếc, không có sản phẩm nào khớp với bộ lọc hiện tại."}
-              </p>
+              <p className="text-gray-400 max-w-xs mx-auto">Rất tiếc, không có sản phẩm nào khớp với bộ lọc hiện tại.</p>
               <button onClick={resetFilters} className="mt-6 text-gym-yellow font-bold hover:underline">
                   Xóa bộ lọc & Thử lại
               </button>
