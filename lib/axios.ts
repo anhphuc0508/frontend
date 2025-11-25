@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://backend-c9mb.onrender.com/api/v1',
+  baseURL: 'https://backend-c9mb.onrender.com/',
   withCredentials: false,
 });
 
