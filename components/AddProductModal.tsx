@@ -208,7 +208,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                         <optgroup label="WHEY PROTEIN">
                             <option value={7}>Whey Protein Blend</option> 
                             <option value={8}>Whey Protein Isolate</option>
-                            <option value={9}>Whey Hydrolyzed Whey</option> 
+                            <option value={9}>Whey Hydrolyzed </option> 
                             <option value={10}>Vegan Protein</option> 
                            <option value={11}>Protein Bar</option>  
                       <option value={15}> Dạng bột</option>
@@ -234,6 +234,12 @@ const AddProductModal: React.FC<AddProductModalProps> = ({
                         <option value={2}>Myprotein</option>
                         <option value={3}>Rule 1</option>
                         <option value={4}>Applied Nutrition</option>
+                        <option value={5}>C4</option>
+                        <option value={6}>BPI Sports</option>
+                        <option value={7}>Thorne Research</option>
+                        <option value={8}>Nutrex</option>
+                        <option value={9}>Redcon1</option>
+                        <option value={10}>GymSup</option>
                     </select>
                 </div>
             </div>
