@@ -1,3 +1,5 @@
+// File: src/components/KnowledgeSection.tsx
+
 import React from 'react';
 import { Article } from '../types';
 
@@ -6,21 +8,23 @@ interface KnowledgeSectionProps {
   nutritionArticles: Article[];
 }
 
-// Component con: Thẻ bài viết (để tái sử dụng)
 const ArticleCard: React.FC<{ article: Article }> = ({ article }) => {
   
-  // Hàm xử lý khi bấm vào bài viết
-  const handleClick = () => {
-    // Sau này có Router thì dùng navigate('/blog/...')
-    alert(`Đang mở bài viết: "${article.title}"\n(Tính năng đang phát triển)`);
-  };
+  // 👇 ĐÃ SỬA: Lấy đúng trường 'url' trong dữ liệu
+  const postLink = article.url || '#'; 
+  
+  // Kiểm tra xem link có phải là link ngoài (facebook, youtube...) không
+  const isExternalLink = postLink.startsWith('http');
 
   return (
-    <div 
-      onClick={handleClick}
-      className="group cursor-pointer bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-800 hover:border-yellow-500 transition-all duration-300 hover:-translate-y-1 shadow-lg"
+    <a 
+      href={postLink}
+      // Link ngoài thì mở tab mới, link nội bộ thì mở tab hiện tại
+      target={isExternalLink ? "_blank" : "_self"}
+      rel={isExternalLink ? "noopener noreferrer" : undefined}
+      className="group block cursor-pointer bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-800 hover:border-yellow-500 transition-all duration-300 hover:-translate-y-1 shadow-lg"
     >
-      {/* Hình ảnh có hiệu ứng Zoom khi hover */}
+      {/* Hình ảnh */}
       <div className="h-48 overflow-hidden relative">
         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all z-10"/>
         <img 
@@ -30,7 +34,7 @@ const ArticleCard: React.FC<{ article: Article }> = ({ article }) => {
         />
       </div>
 
-      {/* Nội dung bài viết */}
+      {/* Nội dung */}
       <div className="p-5">
         <div className="flex justify-between items-center mb-3">
             <span className="text-xs font-bold text-yellow-500 uppercase tracking-wider border border-yellow-500/30 px-2 py-1 rounded bg-yellow-500/10">
@@ -54,7 +58,7 @@ const ArticleCard: React.FC<{ article: Article }> = ({ article }) => {
             </svg>
         </div>
       </div>
-    </div>
+    </a>
   );
 };
 
@@ -62,8 +66,7 @@ const KnowledgeSection: React.FC<KnowledgeSectionProps> = ({ supplementArticles,
   return (
     <section className="py-8 border-t border-gray-800">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        
-        {/* CỘT 1: KIẾN THỨC SUPPLEMENT */}
+        {/* CỘT 1 */}
         <div>
           <div className="flex justify-between items-end mb-6 border-b border-gray-800 pb-4">
             <h2 className="text-2xl font-extrabold text-white uppercase tracking-wide">
@@ -80,7 +83,7 @@ const KnowledgeSection: React.FC<KnowledgeSectionProps> = ({ supplementArticles,
           </div>
         </div>
 
-        {/* CỘT 2: KIẾN THỨC DINH DƯỠNG */}
+        {/* CỘT 2 */}
         <div>
           <div className="flex justify-between items-end mb-6 border-b border-gray-800 pb-4">
             <h2 className="text-2xl font-extrabold text-white uppercase tracking-wide">
@@ -96,7 +99,6 @@ const KnowledgeSection: React.FC<KnowledgeSectionProps> = ({ supplementArticles,
             ))}
           </div>
         </div>
-
       </div>
     </section>
   );

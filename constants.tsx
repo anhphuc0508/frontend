@@ -312,11 +312,12 @@ export const wheyProducts = allProducts.filter(p => p.category === 'Whey Protein
 export const strengthProducts = allProducts.filter(p => p.category === 'Tăng sức mạnh').slice(0, 6);
 
 export const supplementArticles: Article[] = [
-    { id: 1, title: 'Whey Protein là gì? Tác dụng và cách dùng hiệu quả', date: '15/07/2023', snippet: 'Tìm hiểu sâu về Whey Protein...', image: 'https://picsum.photos/seed/article1/400/200', category: 'Kiến thức Supplement' },
-    { id: 2, title: 'Creatine: "Vua" của các loại thực phẩm bổ sung tăng sức mạnh', date: '12/07/2023', snippet: 'Creatine đã được chứng minh là...', image: 'https://picsum.photos/seed/article2/400/200', category: 'Kiến thức Supplement' },
+  
+    { id: 1, title: 'Whey Protein là gì? Tác dụng và cách dùng hiệu quả', date: '15/07/2023', snippet: 'Tìm hiểu sâu về Whey Protein, lợi ích đối với người tập gym và cách sử dụng để tối ưu hóa sự phát triển cơ bắp.', image: 'https://picsum.photos/seed/article1/400/200', category: 'Kiến thức Supplement', url: 'https://www.thegioiwhey.com/blogs/kien-thuc-the-hinh/whey-protein-la-gi-tac-dung-huu-ich-cua-whey-protein' },
+    { id: 2, title: 'Creatine: "Vua" của các loại thực phẩm bổ sung tăng sức mạnh', date: '12/07/2023', snippet: 'Creatine đã được chứng minh là một trong những chất bổ sung hiệu quả nhất để tăng cường sức mạnh và hiệu suất tập luyện.', image: 'https://picsum.photos/seed/article2/400/200', category: 'Kiến thức Supplement', url: 'https://gymstore.vn/creatine-la-gi' },
 ];
 
 export const nutritionArticles: Article[] = [
-    { id: 3, title: 'BMR là gì? Hướng dẫn tính BMR để tăng/giảm cân khoa học', date: '10/07/2023', snippet: 'Chỉ số BMR giúp bạn xác định lượng calo...', image: 'https://picsum.photos/seed/article3/400/200', category: 'Kiến thức Dinh dưỡng' },
-    { id: 4, title: 'Top 10 thực phẩm giàu protein cho người tập gym', date: '08/07/2023', snippet: 'Xây dựng cơ bắp không chỉ đến từ việc tập luyện...', image: 'https://picsum.photos/seed/article4/400/200', category: 'Kiến thức Dinh dưỡng' },
+    { id: 3, title: 'BMR là gì? Hướng dẫn tính BMR để tăng/giảm cân khoa học', date: '10/07/2023', snippet: 'Chỉ số BMR giúp bạn xác định lượng calo cần thiết mỗi ngày để duy trì hoặc thay đổi cân nặng một cách hiệu quả.', image: 'https://picsum.photos/seed/article3/400/200', category: 'Kiến thức Dinh dưỡng', url: 'https://tamanhhospital.vn/bmr' },
+    { id: 4, title: 'Top 10 thực phẩm giàu protein cho người tập gym', date: '08/07/2023', snippet: 'Xây dựng cơ bắp không chỉ đến từ việc tập luyện mà còn phụ thuộc rất nhiều vào chế độ ăn uống giàu protein.', image: 'https://picsum.photos/seed/article4/400/200', category: 'Kiến thức Dinh dưỡng', url: 'https://www.wheystore.vn/news/thuc-pham-giau-protein-1154' },
 ];

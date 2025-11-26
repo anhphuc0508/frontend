@@ -1,11 +1,16 @@
 // File: src/components/AdminPage.tsx
 
-import React, { useState, useEffect, useRef, useMemo, Fragment } from 'react';
-import { User, Theme, Product, Order, OrderStatus, CreateProductRequest } from '../types';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { User, Theme, Product, Order, OrderStatus, CreateProductRequest, Article } from '../types';
 import AddProductModal from './AddProductModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import FeaturedProductsView from './FeaturedProductsView'; 
+import KnowledgeManagementView from './KnowledgeManagementView';
+import AddArticleModal from './AddArticleModal'; // Import Modal mới
+// Import dữ liệu khởi tạo và đổi tên để tránh trùng state
+import { supplementArticles as initialSuppArticles, nutritionArticles as initialNutriArticles } from '../constants';
 
-// --- BỘ ICON SVG (GIỮ NGUYÊN) ---
+// --- BỘ ICON SVG ---
 const PaletteIcon: React.FC<{className?: string}> = ({className}) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402a3.75 3.75 0 00-5.304-5.304L4.098 14.6c-1.464 1.464-1.464 3.84 0 5.304z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.402-2.368-1.07-3.22a4.5 4.5 0 00-6.364-6.364L12 7.5" /></svg>
 );
@@ -15,11 +20,17 @@ const DashboardIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5'
 const ProductIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 7.125A2.25 2.25 0 014.5 4.875h15A2.25 2.25 0 0121.75 7.125v4.5A2.25 2.25 0 0119.5 13.875h-15A2.25 2.25 0 012.25 11.625v-4.5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.375A2.25 2.25 0 014.5 16.125h15A2.25 2.25 0 0121.75 18.375v.75A2.25 2.25 0 0119.5 21.375h-15A2.25 2.25 0 012.25 19.125v-.75z" /></svg>
 );
+const StarIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
+);
 const OrderIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg>
 );
 const UserIconSvg: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-2.452a9.75 9.75 0 00-1.594-1.594l-2.072-2.072a3.375 3.375 0 00-4.774-4.774l-2.072-2.072a9.75 9.75 0 00-1.594-1.594 9.337 9.337 0 00-2.452 4.121 9.38 9.38 0 00.372 2.625M12 15a3 3 0 100-6 3 3 0 000 6z" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+);
+const BookIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
 );
 const PostIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
     <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
@@ -43,9 +54,10 @@ const ChevronDownIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-
 const navItems = [
   { name: 'Bảng điều khiển', icon: DashboardIcon },
   { name: 'Quản lý sản phẩm', icon: ProductIcon },
+  { name: 'Quản lý sản phẩm nổi bật', icon: StarIcon },
   { name: 'Quản lý đơn hàng', icon: OrderIcon },
+  { name: 'Quản lý kiến thức', icon: BookIcon },
   { name: 'Quản lý người dùng', icon: UserIconSvg },
-  { name: 'Quản lý bài viết', icon: PostIcon },
   { name: 'Trang Chủ', icon: HomeIcon },
 ];
 
@@ -62,28 +74,18 @@ interface AdminPageProps {
 }
 
 // ==========================================================
-// === DASHBOARD VIEW (Tự tính toán trên Frontend) ===
+// === DASHBOARD VIEW ===
 // ==========================================================
 const DashboardView: React.FC<{products: Product[], orders: Order[]}> = ({products, orders}) => {
     
-    // Logic tính toán số liệu từ props
     const stats = useMemo(() => {
-        // 1. Tổng sản phẩm
         const totalProducts = products.length;
-
-        // 2. Tổng đơn hàng
         const totalOrders = orders.length;
-
-        // 3. Tổng doanh thu (Chỉ tính đơn không bị Hủy/Trả)
         const validOrders = orders.filter(o => o.status !== 'CANCELLED' && o.status !== 'RETURNED');
         const totalRevenue = validOrders.reduce((sum, order) => sum + order.total, 0);
-
-        // 4. Doanh thu tháng này (Giả lập: Tính theo ngày trong chuỗi string)
-        // Lấy tháng hiện tại: "11/2025"
-        const currentMonthStr = new Date().toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' }); // ví dụ "11/2025"
+        const currentMonthStr = new Date().toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' });
         
         const monthlyRevenue = validOrders.reduce((sum, order) => {
-            // order.date thường là "dd/mm/yyyy hh:mm:ss" hoặc dạng chuỗi
             if (order.date.includes(currentMonthStr) || order.date.includes(new Date().getMonth() + 1 + "/")) {
                 return sum + order.total;
             }
@@ -94,7 +96,7 @@ const DashboardView: React.FC<{products: Product[], orders: Order[]}> = ({produc
             totalProducts,
             totalOrders,
             totalRevenue,
-            monthlyRevenue: monthlyRevenue > 0 ? monthlyRevenue : totalRevenue * 0.3, // Fallback nếu format ngày ko khớp
+            monthlyRevenue: monthlyRevenue > 0 ? monthlyRevenue : totalRevenue * 0.3,
         };
     }, [products, orders]);
 
@@ -105,31 +107,24 @@ const DashboardView: React.FC<{products: Product[], orders: Order[]}> = ({produc
             </header>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {/* Card 1 */}
                 <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--admin-border-color)]">
                     <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Tổng doanh thu (Thực tế)</h3>
                     <p className="text-2xl font-bold mt-2 text-green-400">
                         {stats.totalRevenue.toLocaleString('vi-VN')}₫
                     </p>
                 </div>
-
-                {/* Card 2 */}
                 <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--admin-border-color)]">
                     <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Doanh thu tháng này</h3>
                     <p className="text-2xl font-bold mt-2 text-yellow-400">
                         {Math.round(stats.monthlyRevenue).toLocaleString('vi-VN')}₫
                     </p>
                 </div>
-
-                {/* Card 3 */}
                 <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--admin-border-color)]">
                     <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Tổng đơn hàng</h3>
                     <p className="text-2xl font-bold mt-2 text-blue-400">
                         {stats.totalOrders} đơn
                     </p>
                 </div>
-
-                {/* Card 4 */}
                 <div className="bg-[var(--admin-bg-card)] p-6 rounded-2xl shadow-sm border border-[var(--admin-border-color)]">
                     <h3 className="text-[var(--admin-text-secondary)] text-sm font-medium">Sản phẩm đang bán</h3>
                     <p className="text-2xl font-bold mt-2 text-white">
@@ -337,7 +332,7 @@ const ProductManagementView: React.FC<{
     );
 };
 
-// === ORDER MANAGEMENT VIEW (Giữ nguyên tính năng Expand chi tiết) ===
+// === ORDER MANAGEMENT VIEW ===
 const BE_TO_VN_MAP: Record<OrderStatus, string> = {
     'PENDING_CONFIRMATION': 'Chờ xác nhận',
     'PROCESSING': 'Đang xử lý',
@@ -608,6 +603,11 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
+  // 👇 STATE MỚI CHO BÀI VIẾT
+  const [isArticleModalOpen, setIsArticleModalOpen] = useState(false);
+  const [suppArticles, setSuppArticles] = useState<Article[]>(initialSuppArticles);
+  const [nutriArticles, setNutriArticles] = useState<Article[]>(initialNutriArticles);
+
   useEffect(() => {
     const body = document.body;
     body.className = ''; 
@@ -670,10 +670,47 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
     }
   };
 
+  // 👇 HÀM XỬ LÝ THÊM BÀI VIẾT MỚI
+  const handleAddArticle = (newArticleData: Omit<Article, 'id' | 'date'>) => {
+    const newArticle: Article = {
+        id: Date.now(), // Tạo ID giả
+        date: new Date().toLocaleDateString('vi-VN'), // Lấy ngày hiện tại
+        ...newArticleData,
+        url: newArticleData.url || '#', // Fallback nếu user không nhập link
+        image: newArticleData.image || 'https://via.placeholder.com/400x200', // Fallback ảnh
+    };
+
+    if (newArticleData.category === 'Kiến thức Supplement') {
+        setSuppArticles([...suppArticles, newArticle]);
+    } else {
+        setNutriArticles([...nutriArticles, newArticle]);
+    }
+  };
+
   const renderContent = () => {
     switch (activePage) {
         case 'Quản lý sản phẩm':
             return <ProductManagementView products={products} onEdit={handleEditClick} onDelete={handleDeleteClick} onAddNew={handleAddNewClick} />;
+        
+        case 'Quản lý sản phẩm nổi bật':
+            return (
+                <FeaturedProductsView 
+                    products={products} 
+                    onProductUpdate={async (id, req) => {
+                        console.log('AdminPage: Product featured status updated', id);
+                    }} 
+                />
+            );
+
+        case 'Quản lý kiến thức':
+            return (
+                <KnowledgeManagementView 
+                    supplementArticles={suppArticles} 
+                    nutritionArticles={nutriArticles} 
+                    onAddClick={() => setIsArticleModalOpen(true)}
+                />
+            );
+
         case 'Quản lý đơn hàng':
             return <OrderManagementView orders={orders} onUpdateStatus={onUpdateOrderStatus} />;
         case 'Quản lý người dùng':
@@ -746,6 +783,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ currentUser, onLogout, onViewSite
 
       <AddProductModal isOpen={isModalOpen} onClose={handleCloseModal} onAddProduct={onAddProduct} onUpdateProduct={onUpdateProduct} productToEdit={productToEdit} />
       <DeleteConfirmationModal isOpen={isDeleteModalOpen} onClose={handleCancelDelete} onConfirm={handleConfirmDelete} productName={productToDelete?.name || ''} />
+      
+      {/* 👇 MODAL THÊM BÀI VIẾT Ở ĐÂY */}
+      <AddArticleModal 
+        isOpen={isArticleModalOpen} 
+        onClose={() => setIsArticleModalOpen(false)} 
+        onAdd={handleAddArticle} 
+      />
     </div>
   );
 };

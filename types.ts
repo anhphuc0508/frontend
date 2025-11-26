@@ -43,7 +43,7 @@ export interface Product {
   stockQuantity: number;
   categoryId?: number;
   brandId?: number;
-  
+  isFeatured?: boolean;
   parentCategoryId?: number;
   
   // 2. THÊM DÒNG NÀY ĐỂ HỨNG COMMENT
@@ -76,6 +76,7 @@ export interface Article {
   snippet: string;
   image: string;
   category: string;
+  url?: string;
 }
 
 export interface MegaMenuLink {
