@@ -96,15 +96,15 @@ export const navLinks: NavLink[] = [
 
 // --- BRANDS ---
 export const brands: Brand[] = [
-    { id: 1, name: 'Optimum Nutrition', logo: 'https://cdn.hpm.io/wp-content/uploads/2019/06/25133501/ON_logo_black.png' },
-    { id: 2, name: 'Myprotein', logo: 'https://static.thcdn.com/www/common/images/logos/logo-myprotein.svg' },
-    { id: 3, name: 'Rule 1', logo: 'https://cdn.shopify.com/s/files/1/0572/6533/3218/files/Rule1-Logo-Final-2021-01.png?v=1631589139' },
+    { id: 1, name: 'Optimum Nutrition', logo: 'https://cdn.jsdelivr.net/gh/nghiabodoi/-nh-n-ng-18-@main/Logo%20Th%C6%B0%C6%A1ng%20Hi%E1%BB%87u/Optimum%20Nutrition.png' },
+    { id: 2, name: 'Myprotein', logo: 'https://cdn.jsdelivr.net/gh/nghiabodoi/-nh-n-ng-18-@main/Logo%20Th%C6%B0%C6%A1ng%20Hi%E1%BB%87u/Myprotein.png' },
+    { id: 3, name: 'Rule 1', logo: 'https://cdn.jsdelivr.net/gh/nghiabodoi/-nh-n-ng-18-@main/Logo%20Th%C6%B0%C6%A1ng%20Hi%E1%BB%87u/Rule%201.png' },
     { id: 4, name: 'Applied Nutrition', logo: 'https://appliednutrition.uk/cdn/shop/files/Applied_Nutrition_Logo-01_1200x.png?v=1614285899' },
-    { id: 5, name: 'Nutrabolt (C4)', logo: 'https://seeklogo.com/images/C/c4-energy-logo-116223591A-seeklogo.com.png' },
+    { id: 5, name: 'Nutrabolt (C4)', logo: 'https://cdn.jsdelivr.net/gh/nghiabodoi/-nh-n-ng-18-@main/Logo%20Th%C6%B0%C6%A1ng%20Hi%E1%BB%87u/Nutrabolt%20(C4).jpg' },
     { id: 6, name: 'BPI Sports', logo: 'https://cdn.jsdelivr.net/gh/nghiabodoi/-nh-n-ng-18-@main/Logo%20Th%C6%B0%C6%A1ng%20Hi%E1%BB%87u/BPI%20Sports.png' },
     { id: 7, name: 'Thorne Research', logo: 'https://seeklogo.com/images/T/thorne-logo-8E3221522D-seeklogo.com.png' },
     { id: 8, name: 'Nutrex', logo: 'https://cdn.shopify.com/s/files/1/0528/9532/8522/files/nutrex-research-logo.png?v=1632732952' },
-    { id: 9, name: 'Redcon1', logo: 'https://cdn.shopify.com/s/files/1/2028/6933/files/redcon1-logo_400x.png?v=1614324881' },
+    { id: 9, name: 'Redcon1', logo: 'https://cdn.jsdelivr.net/gh/nghiabodoi/-nh-n-ng-18-@main/Logo%20Th%C6%B0%C6%A1ng%20Hi%E1%BB%87u/Redcon1.png' },
     { id: 10, name: 'GymSup', logo: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgNDAiPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgc3R5bGU9ImZvbnQtd2VpZ2h0OmJvbGQ7ZmlsbDojZmZmIj5HWU1TVVA8L3RleHQ+PC9zdmc+' },
 ];
 
