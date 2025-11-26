@@ -12,7 +12,7 @@ const TrendingProducts: React.FC<TrendingProductsProps> = ({ products, onProduct
     <section>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl md:text-3xl font-extrabold uppercase text-white tracking-wider">Sản phẩm <span className="text-gym-yellow">Trending</span></h2>
-        <a href="#" className="text-gym-yellow font-semibold hover:underline">Xem tất cả</a>
+       
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
         {products.map(product => (
