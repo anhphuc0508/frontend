@@ -73,7 +73,7 @@ const KnowledgeSection: React.FC<KnowledgeSectionProps> = ({ supplementArticles,
                 Kiến thức Supplement
             </h2>
             <button className="text-sm font-bold text-gym-gray hover:text-yellow-500 transition-colors">
-                Xem tất cả &rarr;
+                
             </button>
           </div>
           <div className="space-y-6">
@@ -90,7 +90,7 @@ const KnowledgeSection: React.FC<KnowledgeSectionProps> = ({ supplementArticles,
                 Kiến thức Dinh dưỡng
             </h2>
             <button className="text-sm font-bold text-gym-gray hover:text-yellow-500 transition-colors">
-                Xem tất cả &rarr;
+                
             </button>
           </div>
           <div className="space-y-6">
