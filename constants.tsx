@@ -101,7 +101,7 @@ export const brands: Brand[] = [
     { id: 3, name: 'Rule 1', logo: 'https://cdn.shopify.com/s/files/1/0572/6533/3218/files/Rule1-Logo-Final-2021-01.png?v=1631589139' },
     { id: 4, name: 'Applied Nutrition', logo: 'https://appliednutrition.uk/cdn/shop/files/Applied_Nutrition_Logo-01_1200x.png?v=1614285899' },
     { id: 5, name: 'Nutrabolt (C4)', logo: 'https://seeklogo.com/images/C/c4-energy-logo-116223591A-seeklogo.com.png' },
-    { id: 6, name: 'BPI Sports', logo: 'https://cdn.shopify.com/s/files/1/0568/5074/3339/files/BPI_Sports_Logo.png?v=1635338148' },
+    { id: 6, name: 'BPI Sports', logo: 'https://cdn.jsdelivr.net/gh/nghiabodoi/-nh-n-ng-18-@main/Logo%20Th%C6%B0%C6%A1ng%20Hi%E1%BB%87u/BPI%20Sports.png' },
     { id: 7, name: 'Thorne Research', logo: 'https://seeklogo.com/images/T/thorne-logo-8E3221522D-seeklogo.com.png' },
     { id: 8, name: 'Nutrex', logo: 'https://cdn.shopify.com/s/files/1/0528/9532/8522/files/nutrex-research-logo.png?v=1632732952' },
     { id: 9, name: 'Redcon1', logo: 'https://cdn.shopify.com/s/files/1/2028/6933/files/redcon1-logo_400x.png?v=1614324881' },
