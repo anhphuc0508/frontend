@@ -34,7 +34,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
     try {
       if (isLogin) {
         // ĐĂNG NHẬP THẬT VỚI BACKEND
-        const res = await api.post('/api/v1/auth/login', { email, password });
+        const res = await api.post('/auth/login', { email, password });
         const { token, user } = res.data;
 
         // Lưu token + user
@@ -56,7 +56,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
         const [firstName, ...lastParts] = fullName.trim().split(' ');
         const lastName = lastParts.join(' ') || firstName;
 
-        await api.post('/api/v1/auth/register', {
+        await api.post('/auth/register', {
           firstName,
           lastName,
           email,
