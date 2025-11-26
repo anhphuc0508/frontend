@@ -56,7 +56,7 @@ const navItems = [
   { name: 'Quản lý sản phẩm', icon: ProductIcon },
   { name: 'Quản lý sản phẩm nổi bật', icon: StarIcon },
   { name: 'Quản lý đơn hàng', icon: OrderIcon },
-  { name: 'Quản lý kiến thức', icon: BookIcon },
+
   
   { name: 'Trang Chủ', icon: HomeIcon },
 ];
