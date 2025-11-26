@@ -1,7 +1,7 @@
-// components/auth/AuthModal.tsx
+// src/components/auth/AuthModal.tsx
 import React, { useState } from 'react';
-import axios from 'axios';// <-- ĐÃ DÙNG ALIAS (@/)
-import { User } from '@/types'; // <-- ĐÃ DÙNG ALIAS (@/)
+import api from '../lib/axios';
+import { User } from '../types';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -33,20 +33,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
 
     try {
       if (isLogin) {
-        // 👇 FIX: Chỉ gọi /auth/login (vì baseURL đã có /api/v1)
-        const res = await axios.post('https://backend-c9mb.onrender.com/api/v1/auth/login', { email, password });
+        // ĐĂNG NHẬP THẬT VỚI BACKEND
+        const res = await api.post('/auth/login', { email, password });
         const { token, user } = res.data;
 
         // Lưu token + user
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         // Gọi callback
         onLoginSuccess(user);
         handleClose();
       } else {
-        // ĐĂNG KÝ
+        // ĐĂNG KÝ THẬT VỚI BACKEND
         if (password !== confirmPassword) {
           setError('Mật khẩu xác nhận không khớp');
           setLoading(false);
@@ -56,8 +56,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
         const [firstName, ...lastParts] = fullName.trim().split(' ');
         const lastName = lastParts.join(' ') || firstName;
 
-        // 👇 FIX: Chỉ gọi /auth/register
-        await axios.post('https://backend-c9mb.onrender.com/api/v1/auth/register', {
+        await api.post('/auth/register', {
           firstName,
           lastName,
           email,
