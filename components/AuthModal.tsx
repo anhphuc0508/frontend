@@ -1,6 +1,6 @@
 // src/components/auth/AuthModal.tsx
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../lib/axios';
 import { User } from '../types';
 
 interface AuthModalProps {
@@ -34,13 +34,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
     try {
       if (isLogin) {
         // ĐĂNG NHẬP THẬT VỚI BACKEND
-        const res = await axios.post('/api/v1/auth/login', { email, password });
+        const res = await api.post('/api/v1/auth/login', { email, password });
         const { token, user } = res.data;
 
         // Lưu token + user
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         // Gọi callback
         onLoginSuccess(user);
@@ -56,7 +56,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }
         const [firstName, ...lastParts] = fullName.trim().split(' ');
         const lastName = lastParts.join(' ') || firstName;
 
-        await axios.post('/api/v1/auth/register', {
+        await api.post('/api/v1/auth/register', {
           firstName,
           lastName,
           email,
