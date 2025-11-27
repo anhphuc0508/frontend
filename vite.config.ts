@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       proxy: {
         '/api': {
-          target: 'https://backend-c9mb.onrender.com', // ← Backend
+          target: 'http://localhost:8080', // ← Backend
           changeOrigin: true,
           secure: false,
           // ← BỎ REWRITE VÌ KHÔNG CẦN
