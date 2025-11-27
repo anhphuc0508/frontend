@@ -27,7 +27,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const [district, setDistrict] = useState('');
   const [city, setCity] = useState('');
 
-  // State giả để hứng thông tin thẻ (cho có màu mè)
+  // State giả để hứng thông tin thẻ
   const [cardNumber, setCardNumber] = useState('');
   const [cardName, setCardName] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
@@ -35,11 +35,19 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
+  // 👇 LẤY DỮ LIỆU THẬT TỪ CURRENT USER 👇
   useEffect(() => {
     if (currentUser) {
+      // 1. Lấy tên thật
       setFullName(currentUser.name);
-      const mockEmail = currentUser.name.toLowerCase().replace(/\s+/g, '.') + '@example.com';
-      setEmail(mockEmail);
+      
+      // 2. Lấy email thật (nếu không có thì để rỗng, TUYỆT ĐỐI KHÔNG tự chế example.com)
+      setEmail(currentUser.email || ''); 
+      
+      // 3. Lấy sđt thật
+      setPhone(currentUser.phone || ''); 
+      
+      console.log("Checkout User Info:", currentUser); // Bật F12 xem log này để check
     }
   }, [currentUser]); 
 
@@ -57,30 +65,24 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
       quantity: item.quantity,
     }));
 
-    // 👇👇👇 SỬA PAYLOAD Ở ĐÂY 👇👇👇
     const payload = {
       shippingFullName: fullName,
-      shippingEmail: email, // THÊM DÒNG NÀY ĐỂ GỬI EMAIL
+      shippingEmail: email, // Gửi email đang hiển thị trong ô input
       shippingPhoneNumber: phone,
       shippingStreet: street,
       shippingWard: ward,
       shippingDistrict: district,
       shippingCity: city,
-      
-      // Nếu chọn Thẻ -> Gửi về là BANK_TRANSFER để lừa Backend cho đỡ lỗi
       paymentMethod: paymentMethod === 'card' ? 'BANK_TRANSFER' : 'COD', 
-      
       items: itemsPayload,
       couponCode: null, 
     };
-    // 👆👆👆
 
     try {
       await api.post('/orders', payload);
       alert('Đặt hàng thành công!');
       await clearCart(); 
       onOrderSuccess(); 
-
     } catch (err: any) {
       console.error("Lỗi đặt hàng:", err);
       const message = err.response?.data?.message || err.response?.data || 'Đã xảy ra lỗi.';
@@ -94,7 +96,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const readOnlyInputStyle = "w-full bg-gym-dark border border-gray-700 rounded-md p-3 text-gray-400 focus:outline-none cursor-not-allowed";
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-12 animate-fade-in">
       <button onClick={onBackToShop} className="text-sm text-gym-gray hover:text-gym-yellow mb-8">
         &larr; Quay lại cửa hàng
       </button>
@@ -121,6 +123,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gym-gray mb-1">Email (Để nhận thông báo)</label>
+                  {/* Ô Email này sẽ hiện giá trị thật, nếu vẫn ra example.com thì là do tài khoản của bạn đang có email đó */}
                   <input type="email" value={email} className={readOnlyInputStyle} readOnly />
                 </div>
                 <div>
@@ -159,58 +162,28 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   <span className="ml-4 text-white font-semibold">Thẻ Tín dụng / Ghi nợ (Visa/Mastercard)</span>
                 </label>
 
-                {/* FORM NHẬP THẺ (VISUAL ONLY) */}
+                {/* FORM NHẬP THẺ */}
                 {paymentMethod === 'card' && (
                   <div className="bg-gym-dark p-4 rounded-lg border border-gym-yellow/50 mt-3 space-y-4 animate-fade-in">
                     <div>
                       <label className="block text-sm font-medium text-gym-gray mb-1">Số thẻ</label>
-                      <input 
-                        type="text" 
-                        className={inputStyle} 
-                        placeholder="0000 0000 0000 0000" 
-                        required 
-                        value={cardNumber}
-                        onChange={e => setCardNumber(e.target.value)}
-                      />
+                      <input type="text" className={inputStyle} placeholder="0000 0000 0000 0000" required value={cardNumber} onChange={e => setCardNumber(e.target.value)} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gym-gray mb-1">Tên trên thẻ</label>
-                      <input 
-                        type="text" 
-                        className={inputStyle} 
-                        placeholder="NGUYEN VAN A" 
-                        required 
-                        value={cardName}
-                        onChange={e => setCardName(e.target.value)}
-                      />
+                      <input type="text" className={inputStyle} placeholder="NGUYEN VAN A" required value={cardName} onChange={e => setCardName(e.target.value)} />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gym-gray mb-1">Ngày hết hạn</label>
-                        <input 
-                            type="text" 
-                            className={inputStyle} 
-                            placeholder="MM / YY" 
-                            required 
-                            value={cardExpiry}
-                            onChange={e => setCardExpiry(e.target.value)}
-                        />
+                        <input type="text" className={inputStyle} placeholder="MM / YY" required value={cardExpiry} onChange={e => setCardExpiry(e.target.value)} />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gym-gray mb-1">Mã bảo mật (CVV)</label>
-                        <input 
-                            type="password" 
-                            className={inputStyle} 
-                            placeholder="123" 
-                            required 
-                            value={cardCvv}
-                            onChange={e => setCardCvv(e.target.value)}
-                        />
+                        <input type="password" className={inputStyle} placeholder="123" required value={cardCvv} onChange={e => setCardCvv(e.target.value)} />
                       </div>
                     </div>
-                    <div className="text-xs text-yellow-500 italic mt-2">
-                        * Demo: Bạn có thể nhập thông tin giả để test.
-                    </div>
+                    <div className="text-xs text-yellow-500 italic mt-2">* Demo: Bạn có thể nhập thông tin giả để test.</div>
                   </div>
                 )}
               </div>
