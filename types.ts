@@ -106,6 +106,7 @@ export type Theme = 'default' | 'light' | 'black';
 export interface User {
   name: string;
   role: 'USER' | 'ADMIN';
+  email: string;
 }
 
 export type OrderStatus = 'PENDING_CONFIRMATION' | 'PROCESSING' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED' | 'RETURNED';
