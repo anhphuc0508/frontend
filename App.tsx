@@ -180,6 +180,22 @@ const mapBackendOrderToFrontendOrder = (beOrder: any, currentUser: User | null):
 
 type Page = 'home' | 'product' | 'category' | 'checkout' | 'brands' | 'account' | 'order-history';
 
+// Component Info Modal đơn giản (Nếu bạn không có component Modal riêng)
+const InfoModal: React.FC<{ title: string; content: React.ReactNode; onClose: () => void }> = ({ title, content, onClose }) => {
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-[9999] flex justify-center items-center p-4" onClick={onClose}>
+            <div className="bg-gym-dark max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 rounded-lg shadow-2xl transition-all duration-300 transform scale-100" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center pb-3 border-b border-gray-700 mb-4 sticky top-0 bg-gym-dark z-10">
+                    <h2 className="text-2xl font-bold text-gym-yellow">{title}</h2>
+                    <button onClick={onClose} className="text-white hover:text-gym-yellow text-3xl font-light leading-none">×</button>
+                </div>
+                <div className="text-gym-gray">{content}</div>
+            </div>
+        </div>
+    );
+};
+
+
 const App: React.FC = () => {
   const [page, setPage] = useState<Page>('home');
   const [products, setProducts] = useState<Product[]>([]);
@@ -192,6 +208,9 @@ const App: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdminViewingSite, setIsAdminViewingSite] = useState(false);
+  
+  // 👉 THÊM STATE CHO INFO MODAL
+  const [infoModalContent, setInfoModalContent] = useState<{ title: string; content: React.ReactNode; } | null>(null);
 
   useEffect(() => {
     const body = document.body;
@@ -315,6 +334,12 @@ const App: React.FC = () => {
     } catch (err: any) { console.error("Lỗi Cập nhật trạng thái đơn hàng:", err); alert("LỖI: " + (err as any).response?.data?.message || (err as any).message); }
   }, [currentUser, fetchOrders]);
 
+  // 👉 HÀM HANDLER MỚI CHO FOOTER
+  const handleInfoLinkClick = useCallback((title: string, content: React.ReactNode) => {
+      setInfoModalContent({ title, content });
+      window.scrollTo(0, 0); 
+  }, []);
+
   // ... (CÁC HÀM ĐIỀU HƯỚNG) ...
   const handleAdminViewSite = useCallback(() => { setIsAdminViewingSite(true); setPage('home'); window.scrollTo(0, 0); }, []);
   const handleAdminReturnToPanel = useCallback(() => { setIsAdminViewingSite(false); window.scrollTo(0, 0); }, []);
@@ -366,8 +391,20 @@ const App: React.FC = () => {
         <main className="min-h-screen">{renderPage()}</main>
         <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} onCheckout={handleCheckout} />
         <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} onLoginSuccess={handleLoginSuccess} />
-        <Footer />
+        
+        {/* 👉 TRUYỀN PROP VÀO FOOTER ĐỂ KHẮC PHỤC LỖI */}
+        <Footer onInfoLinkClick={handleInfoLinkClick} />
+        
         <Chatbot />
+
+        {/* 👉 RENDER INFO MODAL */}
+        {infoModalContent && (
+            <InfoModal 
+                title={infoModalContent.title} 
+                content={infoModalContent.content} 
+                onClose={() => setInfoModalContent(null)} 
+            />
+        )}
       </div>
     </CartProvider>
   );
