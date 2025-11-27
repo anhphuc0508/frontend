@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { allProducts, supplementArticles, nutritionArticles } from '../constants'; // Import dữ liệu shop để AI học
 
 // 👇 Dán API Key của bạn vào đây (hoặc để trong file .env thì tốt hơn)
-const API_KEY = "AIzaSyC4NOuoO0_vpZ43Eki01vbG8KOs_oZYAX0"; 
+const API_KEY = "AIzaSyBisXgHS32JqD96zLq4MhDy1_3HwLJGObI"; 
 
 interface Message {
   id: number;
