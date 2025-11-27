@@ -12,7 +12,6 @@ export interface ProductVariant {
   imageUrl?: string;
 }
 
-// 1. THÊM TYPE REVIEW
 export interface Review {
   id: number;
   author: string;
@@ -45,8 +44,6 @@ export interface Product {
   brandId?: number;
   isFeatured?: boolean;
   parentCategoryId?: number;
-  
-  // 2. THÊM DÒNG NÀY ĐỂ HỨNG COMMENT
   comments?: Review[]; 
 }
 
@@ -107,6 +104,7 @@ export interface User {
   name: string;
   role: 'USER' | 'ADMIN';
   email: string;
+  phone?: string; // <--- ĐÃ THÊM DÒNG NÀY ĐỂ KHÔNG BỊ MẤT SỐ ĐIỆN THOẠI
 }
 
 export type OrderStatus = 'PENDING_CONFIRMATION' | 'PROCESSING' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED' | 'RETURNED';
@@ -154,6 +152,5 @@ export interface CreateProductRequest {
   categoryId: number;
   brandId: number;
   variants: ProductVariantRequest[];
-  imageUrls: string[]; // Đã thêm từ bước trước
-  //images: string[];    // Đã thêm từ bước trước
+  imageUrls: string[]; 
 }

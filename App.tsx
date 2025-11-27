@@ -115,7 +115,7 @@ const mapProductResponseToProduct = (res: any): Product => {
   };
 };
 
-// === 👇 HÀM MAP ĐƠN HÀNG (VÉT CẠN SĐT & EMAIL) 👇 ===
+// === 👇 HÀM MAP ĐƠN HÀNG (ĐÃ CẬP NHẬT ĐỂ SỬA LỖI MẤT EMAIL/SĐT) 👇 ===
 const mapBackendOrderToFrontendOrder = (beOrder: any, currentUser: User | null): Order => {
   const mapPaymentStatus = (status: string): PaymentStatus => {
     if (status === 'PAID') return 'Đã thanh toán';
@@ -127,42 +127,54 @@ const mapBackendOrderToFrontendOrder = (beOrder: any, currentUser: User | null):
       const { flavor: parsedFlavor, size: parsedSize } = parseVariantName(d.variantName || d.productName || 'Default Variant');
       return {
         variantId: d.variantId, productId: d.productId || 0, productName: d.productName || 'N/A', 
-        name: d.variantName || d.productName, image: `https://placehold.co/400x400?text=Product`, 
+        name: d.variantName || d.productName, image: d.image || d.imageUrl || `https://placehold.co/400x400?text=Product`, 
         price: d.priceAtPurchase, quantity: d.quantity, sku: d.sku || 'N/A', size: parsedSize, flavor: parsedFlavor  
       };
     });
   };
 
-  // 1. Vét cạn SĐT từ mọi nơi có thể
+  // 1. Vét cạn SĐT từ mọi nơi có thể (Thêm beOrder.phoneNumber và receiverPhone)
   const phoneRaw = 
       beOrder.shippingPhoneNumber || 
       beOrder.shippingPhone || 
+      beOrder.phoneNumber ||          
+      beOrder.receiverPhone ||        
+      beOrder.phone ||               
       beOrder.user?.phoneNumber || 
       beOrder.user?.phone || 
-      (currentUser?.role === 'USER' ? currentUser.phone : '') || // Nếu là User xem đơn của mình thì lấy của mình
+      (currentUser?.role === 'USER' ? currentUser.phone : '') || 
       '';
 
-  // 2. Vét cạn Email từ mọi nơi có thể
+  // 2. Vét cạn Email từ mọi nơi có thể (Thêm beOrder.email ở root)
   const emailRaw = 
       beOrder.shippingEmail || 
+      beOrder.email ||               
       beOrder.user?.email || 
-      (currentUser?.role === 'USER' ? currentUser.email : '') || // Nếu là User xem đơn của mình thì lấy của mình
+      (currentUser?.role === 'USER' ? currentUser.email : '') || 
       'Khách vãng lai';
 
+  // 3. Vét cạn tên khách hàng
+  const nameRaw = 
+      beOrder.shippingFullName || 
+      beOrder.fullName ||             
+      beOrder.customerName ||        
+      beOrder.user?.fullName || 
+      'Khách hàng';
+
   return {
-    id: String(beOrder.orderId), 
-    date: new Date(beOrder.createdAt).toLocaleString('vi-VN'),
+    id: String(beOrder.orderId || beOrder.id), 
+    date: beOrder.createdAt ? new Date(beOrder.createdAt).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN'),
     status: beOrder.status as OrderStatus, 
-    total: beOrder.totalAmount,
-    items: mapItems(beOrder.orderDetails || []),
+    total: beOrder.totalAmount || beOrder.total || 0,
+    items: mapItems(beOrder.orderDetails || beOrder.items || []), 
     customer: {
-      name: beOrder.shippingFullName || beOrder.user?.fullName || 'Khách hàng',
+      name: nameRaw,
       email: emailRaw,
       phone: phoneRaw,
-      address: beOrder.shippingAddress,
+      address: beOrder.shippingAddress || beOrder.address || 'Tại cửa hàng',
     },
     paymentStatus: mapPaymentStatus(beOrder.paymentStatus),
-    paymentMethod: String(beOrder.paymentMethod).toLowerCase() as ('cod' | 'card'),
+    paymentMethod: String(beOrder.paymentMethod || 'COD').toLowerCase() as ('cod' | 'card'),
   };
 };
 
