@@ -59,7 +59,7 @@ const Chatbot: React.FC = () => {
 
     try {
       // 2. Gọi API Gemini
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
       
       // Ghép ngữ cảnh + lịch sử chat (cơ bản) + câu hỏi mới
       const prompt = `
