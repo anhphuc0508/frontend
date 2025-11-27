@@ -44,7 +44,7 @@ const CHILD_TO_PARENT_ID_MAP: Record<number, number> = {
     12: 4, 13: 4, 14: 4,            // Con của Tăng sức mạnh
 };
 
-// 3. 👇 MAP BRAND ID (MỚI THÊM ĐỂ FIX LỖI MẤT THƯƠNG HIỆU)
+// 3. MAP BRAND ID
 const FE_BRAND_ID_MAP: Record<string, number> = {
     'Optimum Nutrition': 1,
     'Myprotein': 2,
@@ -139,7 +139,7 @@ const mapProductResponseToProduct = (res: any): Product => {
       createdAt: r.createdAt
   })) : mappedComments; 
 
-  // E. 👇 Xử lý Brand (FIX LỖI MẤT BRAND KHI SỬA)
+  // E. Xử lý Brand
   const rawBrandName = res.brandName || res.brand || 'Chưa rõ';
   const mappedBrandId = res.brandId || FE_BRAND_ID_MAP[rawBrandName] || 0;
 
@@ -161,15 +161,13 @@ const mapProductResponseToProduct = (res: any): Product => {
     sold: 0,
     flavors: allFlavors, 
     sizes: allSizes,     
-    
     categoryId: mappedId, 
     parentCategoryId: mappedParentId,
-    
-    // Gán Brand ID đã map vào đây
     brandId: mappedBrandId,     
   };
 };
 
+// 👇👇👇 ĐOẠN SỬA QUAN TRỌNG ĐÂY 👇👇👇
 const mapBackendOrderToFrontendOrder = (beOrder: any): Order => {
   const mapPaymentStatus = (status: string): PaymentStatus => {
     if (status === 'PAID') return 'Đã thanh toán';
@@ -198,16 +196,25 @@ const mapBackendOrderToFrontendOrder = (beOrder: any): Order => {
     status: beOrder.status as OrderStatus, 
     total: beOrder.totalAmount,
     items: mapItems(beOrder.orderDetails || []),
+    
+    // 👇 SỬA LOGIC LẤY KHÁCH HÀNG ĐỂ HIỆN ĐỦ THÔNG TIN
     customer: {
       name: beOrder.shippingFullName,
-      email: beOrder.shippingEmail || '', 
-      phone: beOrder.shippingPhone || '', 
+      
+      // Fallback: Nếu đơn hàng không có email thì lấy email của user
+      email: beOrder.shippingEmail || beOrder.user?.email || 'Khách vãng lai', 
+      
+      // Thử cả 2 trường phone
+      phone: beOrder.shippingPhoneNumber || beOrder.shippingPhone || '', 
+      
       address: beOrder.shippingAddress,
     },
+    
     paymentStatus: mapPaymentStatus(beOrder.paymentStatus),
     paymentMethod: String(beOrder.paymentMethod).toLowerCase() as ('cod' | 'card'),
   };
 };
+// 👆👆👆 HẾT PHẦN SỬA 👆👆👆
 
 type Page = 'home' | 'product' | 'category' | 'checkout' | 'brands' | 'account' | 'order-history';
 
@@ -447,7 +454,7 @@ const App: React.FC = () => {
                   currentUser={currentUser}
                   onAuthClick={handleAuthClick}
                   onStockSubscribe={handleStockSubscribe}
-                  onCategorySelect={handleCategorySelect} // Pass thêm prop này
+                  onCategorySelect={handleCategorySelect}
                 />;
       case 'category':
         const filterBy = selectedBrand 

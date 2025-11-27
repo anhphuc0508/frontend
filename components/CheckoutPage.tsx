@@ -1,4 +1,4 @@
-// File: src/components/CheckoutPage.tsx (ĐÃ SỬA LỖI MÀU CHỮ TÀNG HÌNH)
+// File: src/components/CheckoutPage.tsx
 
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../contexts/CartContext';
@@ -27,6 +27,12 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
   const [district, setDistrict] = useState('');
   const [city, setCity] = useState('');
 
+  // State giả để hứng thông tin thẻ (cho có màu mè)
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   useEffect(() => {
@@ -51,41 +57,41 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
       quantity: item.quantity,
     }));
 
+    // 👇👇👇 SỬA PAYLOAD Ở ĐÂY 👇👇👇
     const payload = {
       shippingFullName: fullName,
+      shippingEmail: email, // THÊM DÒNG NÀY ĐỂ GỬI EMAIL
       shippingPhoneNumber: phone,
       shippingStreet: street,
       shippingWard: ward,
       shippingDistrict: district,
       shippingCity: city,
-      paymentMethod: paymentMethod === 'card' ? 'BANK_TRANSFER' : 'COD',
+      
+      // Nếu chọn Thẻ -> Gửi về là BANK_TRANSFER để lừa Backend cho đỡ lỗi
+      paymentMethod: paymentMethod === 'card' ? 'BANK_TRANSFER' : 'COD', 
+      
       items: itemsPayload,
       couponCode: null, 
     };
+    // 👆👆👆
 
     try {
       await api.post('/orders', payload);
-      alert('Đặt hàng thành công! Cảm ơn bạn.');
+      alert('Đặt hàng thành công!');
       await clearCart(); 
       onOrderSuccess(); 
 
     } catch (err: any) {
       console.error("Lỗi đặt hàng:", err);
-      const message = err.response?.data?.message || err.response?.data || 'Đã xảy ra lỗi. Vui lòng thử lại.';
-      alert(`Lỗi khi đặt hàng: ${message}`);
+      const message = err.response?.data?.message || err.response?.data || 'Đã xảy ra lỗi.';
+      alert(`Lỗi: ${message}`);
     } finally {
       setIsPlacingOrder(false);
     }
   };
 
   const inputStyle = "w-full bg-gym-darker border border-gray-700 rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gym-yellow";
-  
-  // ========================================================
-  // === SỬA LỖI Ở ĐÂY: Đổi 'text-gym-gray' -> 'text-gray-400' ===
-  // ========================================================
-  const readOnlyInputStyle = "w-full bg-gym-dark border border-gray-700 rounded-md p-3 text-gray-600 focus:outline-none cursor-not-allowed";
-  // ========================================================
-
+  const readOnlyInputStyle = "w-full bg-gym-dark border border-gray-700 rounded-md p-3 text-gray-400 focus:outline-none cursor-not-allowed";
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -109,58 +115,38 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
             <section>
               <h2 className="text-2xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Thông tin giao hàng</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                
-                {/* Trường FullName (readOnly) */}
                 <div className="sm:col-span-2">
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gym-gray mb-1">Họ và tên</label>
-                  <input 
-                    type="text" 
-                    id="fullName" 
-                    value={fullName} 
-                    className={readOnlyInputStyle} // Đã sửa
-                    readOnly 
-                  />
-                </div>
-                
-                {/* Trường Email (readOnly) */}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gym-gray mb-1">Email (Để nhận thông báo)</label>
-                  <input 
-                    type="email" 
-                    id="email" 
-                    value={email} 
-                    className={readOnlyInputStyle} // Đã sửa
-                    readOnly 
-                  />
-                </div>
-                
-                {/* Trường Phone (người dùng nhập) */}
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gym-gray mb-1">Số điện thoại</label>
-                  <input type="tel" id="phone" value={phone} onChange={e => setPhone(e.target.value)} className={inputStyle} placeholder="09xxxxxxxx" required />
-                </div>
-                
-                {/* Địa chỉ (người dùng nhập) */}
-                <div className="sm:col-span-2">
-                  <label htmlFor="street" className="block text-sm font-medium text-gym-gray mb-1">Số nhà, Tên đường</label>
-                  <input type="text" id="street" value={street} onChange={e => setStreet(e.target.value)} className={inputStyle} placeholder="123 Đường ABC" required />
+                  <label className="block text-sm font-medium text-gym-gray mb-1">Họ và tên</label>
+                  <input type="text" value={fullName} className={readOnlyInputStyle} readOnly />
                 </div>
                 <div>
-                  <label htmlFor="ward" className="block text-sm font-medium text-gym-gray mb-1">Phường / Xã</label>
-                  <input type="text" id="ward" value={ward} onChange={e => setWard(e.target.value)} className={inputStyle} placeholder="Phường 10" required />
+                  <label className="block text-sm font-medium text-gym-gray mb-1">Email (Để nhận thông báo)</label>
+                  <input type="email" value={email} className={readOnlyInputStyle} readOnly />
                 </div>
                 <div>
-                  <label htmlFor="district" className="block text-sm font-medium text-gym-gray mb-1">Quận / Huyện</label>
-                  <input type="text" id="district" value={district} onChange={e => setDistrict(e.target.value)} className={inputStyle} placeholder="Quận 5" required />
+                  <label className="block text-sm font-medium text-gym-gray mb-1">Số điện thoại</label>
+                  <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className={inputStyle} placeholder="09xxxxxxxx" required />
                 </div>
                 <div className="sm:col-span-2">
-                  <label htmlFor="city" className="block text-sm font-medium text-gym-gray mb-1">Tỉnh / Thành phố</label>
-                  <input type="text" id="city" value={city} onChange={e => setCity(e.target.value)} className={inputStyle} placeholder="TP. Hồ Chí Minh" required />
+                  <label className="block text-sm font-medium text-gym-gray mb-1">Số nhà, Tên đường</label>
+                  <input type="text" value={street} onChange={e => setStreet(e.target.value)} className={inputStyle} placeholder="123 Đường ABC" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gym-gray mb-1">Phường / Xã</label>
+                  <input type="text" value={ward} onChange={e => setWard(e.target.value)} className={inputStyle} placeholder="Phường 10" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gym-gray mb-1">Quận / Huyện</label>
+                  <input type="text" value={district} onChange={e => setDistrict(e.target.value)} className={inputStyle} placeholder="Quận 5" required />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-gym-gray mb-1">Tỉnh / Thành phố</label>
+                  <input type="text" value={city} onChange={e => setCity(e.target.value)} className={inputStyle} placeholder="TP. Hồ Chí Minh" required />
                 </div>
               </div>
             </section>
 
-            {/* Payment Method (Giữ nguyên) */}
+            {/* Payment Method */}
             <section>
               <h2 className="text-2xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Phương thức thanh toán</h2>
               <div className="mt-4 space-y-3">
@@ -170,28 +156,60 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
                 </label>
                 <label className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-gym-yellow bg-gym-dark' : 'border-gray-700 bg-gym-darker'}`}>
                   <input type="radio" name="paymentMethod" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="h-5 w-5 text-gym-yellow bg-gym-darker border-gray-600 focus:ring-gym-yellow" />
-                  <span className="ml-4 text-white font-semibold">Thẻ Tín dụng/Ghi nợ</span>
+                  <span className="ml-4 text-white font-semibold">Thẻ Tín dụng / Ghi nợ (Visa/Mastercard)</span>
                 </label>
 
+                {/* FORM NHẬP THẺ (VISUAL ONLY) */}
                 {paymentMethod === 'card' && (
                   <div className="bg-gym-dark p-4 rounded-lg border border-gym-yellow/50 mt-3 space-y-4 animate-fade-in">
                     <div>
-                      <label htmlFor="cardNumber" className="block text-sm font-medium text-gym-gray mb-1">Số thẻ</label>
-                      <input type="text" id="cardNumber" className={inputStyle} placeholder="0000 0000 0000 0000" required />
+                      <label className="block text-sm font-medium text-gym-gray mb-1">Số thẻ</label>
+                      <input 
+                        type="text" 
+                        className={inputStyle} 
+                        placeholder="0000 0000 0000 0000" 
+                        required 
+                        value={cardNumber}
+                        onChange={e => setCardNumber(e.target.value)}
+                      />
                     </div>
                     <div>
-                      <label htmlFor="cardName" className="block text-sm font-medium text-gym-gray mb-1">Tên trên thẻ</label>
-                      <input type="text" id="cardName" className={inputStyle} placeholder="NGUYEN VAN A" required />
+                      <label className="block text-sm font-medium text-gym-gray mb-1">Tên trên thẻ</label>
+                      <input 
+                        type="text" 
+                        className={inputStyle} 
+                        placeholder="NGUYEN VAN A" 
+                        required 
+                        value={cardName}
+                        onChange={e => setCardName(e.target.value)}
+                      />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="cardExpiry" className="block text-sm font-medium text-gym-gray mb-1">Ngày hết hạn</label>
-                        <input type="text" id="cardExpiry" className={inputStyle} placeholder="MM / YY" required />
+                        <label className="block text-sm font-medium text-gym-gray mb-1">Ngày hết hạn</label>
+                        <input 
+                            type="text" 
+                            className={inputStyle} 
+                            placeholder="MM / YY" 
+                            required 
+                            value={cardExpiry}
+                            onChange={e => setCardExpiry(e.target.value)}
+                        />
                       </div>
                       <div>
-                        <label htmlFor="cardCvv" className="block text-sm font-medium text-gym-gray mb-1">Mã bảo mật (CVV)</label>
-                        <input type="text" id="cardCvv" className={inputStyle} placeholder="123" required />
+                        <label className="block text-sm font-medium text-gym-gray mb-1">Mã bảo mật (CVV)</label>
+                        <input 
+                            type="password" 
+                            className={inputStyle} 
+                            placeholder="123" 
+                            required 
+                            value={cardCvv}
+                            onChange={e => setCardCvv(e.target.value)}
+                        />
                       </div>
+                    </div>
+                    <div className="text-xs text-yellow-500 italic mt-2">
+                        * Demo: Bạn có thể nhập thông tin giả để test.
                     </div>
                   </div>
                 )}
@@ -199,7 +217,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
             </section>
           </div>
 
-          {/* Right Column (Order Summary) - (Giữ nguyên) */}
+          {/* Right Column (Order Summary) */}
           <div className="lg:col-span-1">
             <aside className="bg-gym-dark rounded-lg p-6 sticky top-24">
               <h2 className="text-2xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Tóm tắt đơn hàng</h2>
