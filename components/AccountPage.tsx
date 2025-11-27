@@ -45,8 +45,8 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
             if (newPassword.length < 6) throw new Error('Mật khẩu mới phải có ít nhất 6 ký tự.');
             if (newPassword !== confirmPassword) throw new Error('Mật khẩu xác nhận không khớp.');
             
-            // Gọi API đổi pass (Giả định bạn sẽ làm API này sau, hiện tại log ra console)
-            // await api.put('/users/change-password', { oldPassword: currentPassword, newPassword });
+           
+             await api.put('/users/change-password', { oldPassword: currentPassword, newPassword });
             console.log("Đổi mật khẩu:", { currentPassword, newPassword });
         }
 
