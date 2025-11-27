@@ -13,7 +13,6 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
   // Khởi tạo state từ currentUser
   const [fullName, setFullName] = useState(currentUser.name || '');
   const [email, setEmail] = useState(currentUser.email || '');
-  // Nếu currentUser chưa có phone thì để trống
   const [phone, setPhone] = useState(currentUser.phone || '');
 
   // State mật khẩu
@@ -24,7 +23,6 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Đồng bộ lại dữ liệu khi currentUser thay đổi (ví dụ sau khi F5)
   useEffect(() => {
     if (currentUser) {
         setFullName(currentUser.name);
@@ -39,50 +37,39 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
     setIsLoading(true);
 
     try {
-        // 1. XỬ LÝ ĐỔI MẬT KHẨU (Nếu có nhập)
+        // 1. XỬ LÝ ĐỔI MẬT KHẨU
         if (newPassword || confirmPassword || currentPassword) {
             if (!currentPassword) throw new Error('Vui lòng nhập mật khẩu hiện tại.');
             if (newPassword.length < 6) throw new Error('Mật khẩu mới phải có ít nhất 6 ký tự.');
             if (newPassword !== confirmPassword) throw new Error('Mật khẩu xác nhận không khớp.');
             
-           
-             await api.put('/users/change-password', { oldPassword: currentPassword, newPassword });
-            console.log("Đổi mật khẩu:", { currentPassword, newPassword });
+            await api.put('/users/change-password', { oldPassword: currentPassword, newPassword });
         }
 
-        // 2. XỬ LÝ CẬP NHẬT THÔNG TIN CÁ NHÂN (QUAN TRỌNG)
-        // Tách họ tên để gửi về Backend (Do Backend lưu firstName, lastName riêng)
+        // 2. XỬ LÝ CẬP NHẬT THÔNG TIN (Chỉ còn cập nhật SĐT vì Tên & Email đã khóa)
         const nameParts = fullName.trim().split(' ');
         const firstName = nameParts[0];
         const lastName = nameParts.slice(1).join(' ') || '';
 
         const payload = {
-            firstName: firstName,
+            firstName: firstName, // Vẫn gửi tên cũ về để không bị lỗi
             lastName: lastName,
             phoneNumber: phone,
-            email: email // Gửi luôn email nếu backend cho sửa
+            email: email 
         };
 
-        // Gọi API update profile
-        const res = await api.put('/users/profile', payload);
+        await api.put('/users/profile', payload);
 
         // 3. CẬP NHẬT LOCAL STORAGE
-        // Để khi F5 lại trang, dữ liệu mới vẫn còn
         const savedUserJson = localStorage.getItem('user');
         if (savedUserJson) {
             const userObj = JSON.parse(savedUserJson);
-            // Cập nhật các trường mới
-            userObj.firstName = firstName;
-            userObj.lastName = lastName;
-            userObj.phoneNumber = phone;
-            userObj.email = email;
-            
+            userObj.phoneNumber = phone; // Chỉ cập nhật SĐT
             localStorage.setItem('user', JSON.stringify(userObj));
         }
 
         setMessage({ type: 'success', text: 'Cập nhật thông tin thành công!' });
 
-        // Reset ô mật khẩu
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -99,6 +86,12 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
   const inputStyle = "w-full bg-gym-dark border border-gray-700 rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gym-yellow transition-all";
   const labelStyle = "block text-sm font-medium text-gym-gray mb-1";
   
+  // Style cho ô bị khóa (giống hệt ô Email)
+  // bg-gray-800: Nền tối hơn
+  // text-gray-400: Chữ xám mờ
+  // cursor-not-allowed: Con trỏ chuột hiện dấu cấm
+  const readOnlyClass = `${inputStyle} bg-gray-800 text-gray-400 cursor-not-allowed`;
+
   return (
     <div className="container mx-auto px-4 py-12 animate-fade-in">
       <button onClick={onBack} className="flex items-center text-sm text-gym-gray hover:text-gym-yellow mb-8 transition-colors">
@@ -124,27 +117,46 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
                 Thông tin cá nhân
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* 👇 Ô HỌ TÊN (ĐÃ KHÓA) 👇 */}
               <div className="md:col-span-2">
                 <label htmlFor="fullName" className={labelStyle}>Họ và tên</label>
-                <input 
-                    type="text" 
-                    id="fullName" 
-                    value={fullName} 
-                    className={inputStyle} 
-                    readOnly 
-                />
+                <div className="relative group">
+                    <input 
+                        type="text" 
+                        id="fullName" 
+                        value={fullName} 
+                        // Bỏ onChange để không cho nhập
+                        className={readOnlyClass} // Áp dụng class khóa
+                        readOnly // Thuộc tính HTML khóa
+                        disabled // Thêm disabled cho chắc chắn
+                    />
+                    {/* Tooltip hiển thị khi hover */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-gray-600">
+                        Không thể thay đổi họ tên
+                    </div>
+                </div>
               </div>
+              
+              {/* Ô EMAIL (ĐÃ KHÓA TỪ TRƯỚC) */}
               <div>
                 <label htmlFor="email" className={labelStyle}>Email (Tên đăng nhập)</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    value={email} 
-                    className={`${inputStyle} bg-gray-800 text-gray-400 cursor-not-allowed`} 
-                    readOnly 
-                    title="Không thể thay đổi email"
-                />
+                <div className="relative group">
+                    <input 
+                        type="email" 
+                        id="email" 
+                        value={email} 
+                        className={readOnlyClass} 
+                        readOnly 
+                        disabled
+                    />
+                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-gray-600">
+                        Không thể thay đổi email
+                    </div>
+                </div>
               </div>
+
+              {/* Ô SỐ ĐIỆN THOẠI (VẪN CHO SỬA) */}
               <div>
                 <label htmlFor="phone" className={labelStyle}>Số điện thoại</label>
                 <input 
@@ -153,7 +165,7 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
                     value={phone} 
                     onChange={e => setPhone(e.target.value)} 
                     className={inputStyle}
-                    placeholder="09xx..." 
+                    placeholder="Nhập số điện thoại..." 
                 />
               </div>
             </div>
@@ -206,7 +218,6 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
             </div>
           </section>
           
-          {/* Notification Message */}
           {message && (
              <div className={`p-4 rounded-lg flex items-center gap-3 ${message.type === 'success' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
                 {message.type === 'success' ? (
