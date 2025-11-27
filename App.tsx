@@ -151,7 +151,7 @@ const mapBackendOrderToFrontendOrder = (beOrder: any, currentUser: User | null):
       beOrder.email ||               
       beOrder.user?.email || 
       (currentUser?.role === 'USER' ? currentUser.email : '') || 
-      'Khách vãng lai';
+      '';
 
   // 3. Vét cạn tên khách hàng
   const nameRaw = 
