@@ -63,7 +63,7 @@ const FeaturedProductsView: React.FC<FeaturedProductsViewProps> = ({ products })
             <header className="mb-8">
                 <h1 className="text-3xl font-bold">Quản lý sản phẩm nổi bật</h1>
                 <p className="text-[var(--admin-text-secondary)] mt-1">
-                    Chọn sản phẩm để hiển thị (Dữ liệu lưu LocalStorage).
+                    Chọn sản phẩm nổi bật để hiển thị 
                 </p>
             </header>
 
