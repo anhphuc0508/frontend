@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { allProducts, supplementArticles, nutritionArticles } from '../constants'; // Import dữ liệu shop để AI học
 
 // 👇 Dán API Key của bạn vào đây (hoặc để trong file .env thì tốt hơn)
-const API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
+const API_KEY = "AIzaSyCfKIGGbb7QVgq7G8Z__PiRjS1GHimYrkU";
 
 interface Message {
   id: number;
