@@ -130,10 +130,7 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
                     type="text" 
                     id="fullName" 
                     value={fullName} 
-                    onChange={e => setFullName(e.target.value)} 
                     className={inputStyle} 
-                    placeholder="Nhập họ tên của bạn"
-                    required 
                     readOnly 
                 />
               </div>
