@@ -58,7 +58,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({
       shippingWard: ward,
       shippingDistrict: district,
       shippingCity: city,
-      paymentMethod: paymentMethod.toUpperCase(), 
+      paymentMethod: paymentMethod === 'card' ? 'BANK_TRANSFER' : 'COD',
       items: itemsPayload,
       couponCode: null, 
     };
