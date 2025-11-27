@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       proxy: {
         '/api': {
-          target: 'https://backend-production-5dcb.up.railway.app', // ← Backend
+          target: 'https://backend-production-3c0b.up.railway.app/', // ← Backend
           changeOrigin: true,
           secure: false,
           // ← BỎ REWRITE VÌ KHÔNG CẦN
