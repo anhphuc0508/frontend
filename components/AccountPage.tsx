@@ -1,5 +1,8 @@
+// File: src/components/AccountPage.tsx
+
 import React, { useState } from 'react';
 import { User } from '../types';
+import api from '../lib/axios'; // 👇 1. Nhớ import cái này để gọi Backend
 
 interface AccountPageProps {
   currentUser: User;
@@ -8,19 +11,23 @@ interface AccountPageProps {
 
 const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
   const [fullName, setFullName] = useState(currentUser.name);
-  const [email, setEmail] = useState(currentUser.name.toLowerCase().replace(' ','.') + '.vip234@email.com'); // Simulated email
-  const [phone, setPhone] = useState('0987654321'); // Simulated phone
+  // ... (Giữ nguyên các state email, phone...)
+  const [email, setEmail] = useState(currentUser.name.toLowerCase().replace(' ','.') + '.vip234@email.com');
+  const [phone, setPhone] = useState('0987654321');
+
+  // State mật khẩu
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // 👇 2. Sửa hàm này thành ASYNC để gọi API
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
 
-    // Password change validation
+    // Validate cơ bản (Giữ nguyên)
     if (newPassword || confirmPassword || currentPassword) {
       if (!currentPassword) {
         setMessage({ type: 'error', text: 'Vui lòng nhập mật khẩu hiện tại.' });
@@ -34,23 +41,44 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
         setMessage({ type: 'error', text: 'Mật khẩu xác nhận không khớp.' });
         return;
       }
+
+      // --- BẮT ĐẦU GỌI BACKEND ---
+      try {
+          // Gọi API đổi mật khẩu (Giả sử Backend bạn đã làm endpoint này)
+          await api.put('/users/change-password', {
+              oldPassword: currentPassword,
+              newPassword: newPassword
+          });
+
+          setMessage({ type: 'success', text: 'Đổi mật khẩu thành công!' });
+          
+          // Reset form sau khi thành công
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+
+      } catch (err: any) {
+          console.error(err);
+          // Lấy lỗi từ Backend trả về (ví dụ: "Mật khẩu cũ không đúng")
+          const errorMsg = err.response?.data || err.response?.data?.message || 'Lỗi đổi mật khẩu';
+          setMessage({ type: 'error', text: typeof errorMsg === 'string' ? errorMsg : 'Có lỗi xảy ra' });
+      }
+      // --- KẾT THÚC GỌI BACKEND ---
+
+    } else {
+        // Trường hợp chỉ cập nhật thông tin cá nhân (Họ tên, SĐT...)
+        // Bạn cũng có thể gọi API cập nhật profile ở đây nếu muốn
+        setMessage({ type: 'success', text: 'Thông tin cá nhân đã được cập nhật (Demo)!' });
     }
-    
-    // In a real app, you would make an API call here.
-    // For now, we just simulate a success.
-    setMessage({ type: 'success', text: 'Thông tin đã được cập nhật thành công!' });
-    
-    // Clear password fields after submission
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
   };
   
+  // ... (Phần giao diện return bên dưới GIỮ NGUYÊN KHÔNG ĐỔI) ...
   const inputStyle = "w-full bg-gym-dark border border-gray-700 rounded-md p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gym-yellow";
   const labelStyle = "block text-sm font-medium text-gym-gray mb-1";
   
   return (
     <div className="container mx-auto px-4 py-12">
+      {/* ... (Giữ nguyên nội dung HTML cũ) ... */}
       <button onClick={onBack} className="text-sm text-gym-gray hover:text-gym-yellow mb-8">
         &larr; Quay lại trang chủ
       </button>
