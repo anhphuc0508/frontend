@@ -23,16 +23,20 @@ import AccountPage from './components/AccountPage';
 import OrderHistoryPage from './components/OrderHistoryPage';
 
 // ====================================================================
-// MAP CATEGORY & BRAND (GIỮ NGUYÊN)
+// 1. MAP CATEGORY ID
 const FE_CATEGORY_ID_MAP: Record<string, number> = {
     'Whey Protein': 1, 'Tăng cân': 3, 'Tăng sức mạnh': 4, 'Hỗ trợ sức khỏe': 5, 'Phụ kiện': 6,
     'Whey Protein Blend': 7, 'Whey Protein Isolate': 8, 'Hydrolyzed Whey': 9, 'Vegan Protein': 10, 'Protein Bar': 11, 'Dạng bột' : 15,
     'Pre-workout': 12, 'BCAA / EAA': 13, 'Creatine': 14,
 };
+
+// 2. MAP PARENT ID (Con -> Cha)
 const CHILD_TO_PARENT_ID_MAP: Record<number, number> = {
     7: 1, 8: 1, 9: 1, 10: 1, 11: 1,
     12: 4, 13: 4, 14: 4,
 };
+
+// 3. MAP BRAND ID
 const FE_BRAND_ID_MAP: Record<string, number> = {
     'Optimum Nutrition': 1, 'Myprotein': 2, 'Rule 1': 3, 'Applied Nutrition': 4,
     'Nutrabolt (C4)': 5, 'BPI Sports': 6, 'Thorne Research': 7, 'Nutrex': 8, 'Redcon1': 9, 'GymSup': 10,
@@ -54,7 +58,7 @@ const parseVariantName = (name: string): { flavor: string, size: string } => {
     return { flavor: flavor || 'Default Flavor', size: size };
 };
 
-// === HÀM MAP PRODUCT (GIỮ NGUYÊN) ===
+// === HÀM MAP SẢN PHẨM ===
 const mapProductResponseToProduct = (res: any): Product => {
   const rawCategoryName = res.categoryName || res.category || 'Chưa phân loại';
   const mappedId = res.categoryId || FE_CATEGORY_ID_MAP[rawCategoryName] || 0;
@@ -111,13 +115,13 @@ const mapProductResponseToProduct = (res: any): Product => {
   };
 };
 
-// === HÀM MAP ORDER (ĐÃ SỬA ĐỂ NHẬN CURRENT USER) ===
-// Thêm tham số currentUser vào đây để lấy email nếu đơn hàng thiếu
+// === 👇 HÀM MAP ĐƠN HÀNG (VÉT CẠN SĐT & EMAIL) 👇 ===
 const mapBackendOrderToFrontendOrder = (beOrder: any, currentUser: User | null): Order => {
   const mapPaymentStatus = (status: string): PaymentStatus => {
     if (status === 'PAID') return 'Đã thanh toán';
     return 'Chưa thanh toán'; 
   };
+  
   const mapItems = (details: any[]): CartItem[] => {
     return details.map(d => {
       const { flavor: parsedFlavor, size: parsedSize } = parseVariantName(d.variantName || d.productName || 'Default Variant');
@@ -129,14 +133,21 @@ const mapBackendOrderToFrontendOrder = (beOrder: any, currentUser: User | null):
     });
   };
 
-  // Logic lấy email: 
-  // 1. Ưu tiên email lưu trong đơn hàng (shippingEmail)
-  // 2. Nếu không có, lấy email từ object user đi kèm đơn hàng (beOrder.user.email)
-  // 3. Nếu vẫn không có, VÀ người đang xem là chủ đơn hàng (User thường), lấy email của người đang đăng nhập
-  let fallbackEmail = 'Khách vãng lai';
-  if (currentUser && currentUser.role === 'USER') {
-      fallbackEmail = currentUser.email; // Lấy email của chính mình
-  }
+  // 1. Vét cạn SĐT từ mọi nơi có thể
+  const phoneRaw = 
+      beOrder.shippingPhoneNumber || 
+      beOrder.shippingPhone || 
+      beOrder.user?.phoneNumber || 
+      beOrder.user?.phone || 
+      (currentUser?.role === 'USER' ? currentUser.phone : '') || // Nếu là User xem đơn của mình thì lấy của mình
+      '';
+
+  // 2. Vét cạn Email từ mọi nơi có thể
+  const emailRaw = 
+      beOrder.shippingEmail || 
+      beOrder.user?.email || 
+      (currentUser?.role === 'USER' ? currentUser.email : '') || // Nếu là User xem đơn của mình thì lấy của mình
+      'Khách vãng lai';
 
   return {
     id: String(beOrder.orderId), 
@@ -145,10 +156,9 @@ const mapBackendOrderToFrontendOrder = (beOrder: any, currentUser: User | null):
     total: beOrder.totalAmount,
     items: mapItems(beOrder.orderDetails || []),
     customer: {
-      name: beOrder.shippingFullName,
-      // 👇 ƯU TIÊN LẤY EMAIL TỪ DB, NẾU KHÔNG CÓ THÌ LẤY CỦA USER ĐANG LOGIN
-      email: beOrder.shippingEmail || beOrder.user?.email || fallbackEmail, 
-      phone: beOrder.shippingPhoneNumber || beOrder.shippingPhone || '', 
+      name: beOrder.shippingFullName || beOrder.user?.fullName || 'Khách hàng',
+      email: emailRaw,
+      phone: phoneRaw,
       address: beOrder.shippingAddress,
     },
     paymentStatus: mapPaymentStatus(beOrder.paymentStatus),
@@ -191,12 +201,11 @@ const App: React.FC = () => {
     }
   }, []); 
 
-  // 👇 Sửa fetchOrders để truyền currentUser vào hàm map
   const fetchOrders = useCallback(async (userRole: 'ADMIN' | 'USER', userContext: User | null) => {
     try {
       const endpoint = userRole === 'ADMIN' ? '/orders' : '/orders/my-orders';
       const res = await api.get(endpoint);
-      // Truyền userContext vào đây
+      // Truyền userContext vào hàm map để fallback
       const mappedOrders = res.data.map((o: any) => mapBackendOrderToFrontendOrder(o, userContext));
       setOrders(mappedOrders);
     } catch (err: any) {
@@ -213,11 +222,12 @@ const App: React.FC = () => {
         const userRes: UserResponse = JSON.parse(userJson); 
         const userRole = userRes.role as ('USER' | 'ADMIN'); 
         
-        // 👇 TẠO USER OBJECT CÓ EMAIL
+        // Tạo User Object đầy đủ
         const userObj: User = {
           name: `${userRes.firstName} ${userRes.lastName}`,
           role: userRole,
-          email: userRes.email // Lấy email từ localStorage
+          email: userRes.email,
+          phone: userRes.phoneNumber // Lấy thêm SĐT từ localStorage
         };
 
         setCurrentUser(userObj);
@@ -235,11 +245,11 @@ const App: React.FC = () => {
     localStorage.setItem('user', JSON.stringify(userResponse));
     const userRole = userResponse.role as ('USER' | 'ADMIN');
     
-    // 👇 TẠO USER OBJECT CÓ EMAIL
     const userObj: User = {
       name: `${userResponse.firstName} ${userResponse.lastName}`, 
       role: userRole,
-      email: userResponse.email // Lấy email từ response đăng nhập
+      email: userResponse.email,
+      phone: userResponse.phoneNumber // Lấy thêm SĐT từ response
     };
 
     setCurrentUser(userObj);
@@ -257,7 +267,7 @@ const App: React.FC = () => {
     setIsAdminViewingSite(false);
   }, []);
 
-  // ... (CÁC HÀM XỬ LÝ SẢN PHẨM GIỮ NGUYÊN) ...
+  // ... (CÁC HÀM XỬ LÝ SẢN PHẨM) ...
   const handleAddProduct = useCallback(async (request: CreateProductRequest) => {
     try { await api.post('/products', request); alert('Thêm sản phẩm thành công!'); await fetchProducts(); } 
     catch (err: any) { console.error("Lỗi Thêm sản phẩm:", err); alert("LỖI: " + (err as any).response?.data?.message || (err as any).message); }
@@ -293,7 +303,7 @@ const App: React.FC = () => {
     } catch (err: any) { console.error("Lỗi Cập nhật trạng thái đơn hàng:", err); alert("LỖI: " + (err as any).response?.data?.message || (err as any).message); }
   }, [currentUser, fetchOrders]);
 
-  // ... (CÁC HÀM ĐIỀU HƯỚNG GIỮ NGUYÊN) ...
+  // ... (CÁC HÀM ĐIỀU HƯỚNG) ...
   const handleAdminViewSite = useCallback(() => { setIsAdminViewingSite(true); setPage('home'); window.scrollTo(0, 0); }, []);
   const handleAdminReturnToPanel = useCallback(() => { setIsAdminViewingSite(false); window.scrollTo(0, 0); }, []);
   const handleGoHome = useCallback(() => { setPage('home'); setSelectedProduct(null); setSelectedCategory(null); setSelectedBrand(null); window.scrollTo(0, 0); }, []);
