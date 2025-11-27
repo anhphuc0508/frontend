@@ -134,6 +134,7 @@ const AccountPage: React.FC<AccountPageProps> = ({ currentUser, onBack }) => {
                     className={inputStyle} 
                     placeholder="Nhập họ tên của bạn"
                     required 
+                    readOnly 
                 />
               </div>
               <div>
