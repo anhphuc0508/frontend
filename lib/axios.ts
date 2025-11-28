@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: 'https://backend-production-3c0b.up.railway.app/api/v1',
+  //http://localhost:8080
   withCredentials: false,
 });
 
