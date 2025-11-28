@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import api from '../lib/axios';
 import { User, UserResponse } from '../types';
-
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
