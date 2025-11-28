@@ -1,12 +1,12 @@
 // src/components/auth/AuthModal.tsx
 import React, { useState } from 'react';
 import api from '../lib/axios';
-import { User } from '../types';
+import { User, UserResponse } from '../types';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: (user: User) => void;
+  onLoginSuccess: (user: UserResponse) => void;
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {

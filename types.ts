@@ -10,6 +10,7 @@ export interface ProductVariant {
   flavor: string;
   size: string;
   imageUrl?: string;
+  salePrice?: number;
 }
 
 export interface Review {
